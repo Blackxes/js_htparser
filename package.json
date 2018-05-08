@@ -1,0 +1,28 @@
+{
+  "name": "html_template_parser_v2",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {
+    "build": "browserify app.js -o bundle.js",
+    "watch": "watchify app.js -o bundle.js"
+  },
+  "author": "Alexander Bassov",
+  "license": "ISC",
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.6.1",
+    "babel-preset-es2015": "^6.24.1",
+    "browserify": "^16.2.0",
+    "watchify": "^3.11.0"
+  },
+  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Blackxes/html_template_parser_v2.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Blackxes/html_template_parser_v2/issues"
+  },
+  "homepage": "https://github.com/Blackxes/html_template_parser_v2#readme",
+  "description": ""
+}
