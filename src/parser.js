@@ -28,7 +28,7 @@ class HTMLParser {
 	// template#templates
 	//
 	loadTemplates() {
-
+		
 		let raw = document.querySelector("template#templates").content.children;
 
 		for (let index in raw) {
