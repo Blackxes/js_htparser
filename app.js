@@ -13,4 +13,21 @@
 
 //_____________________________________________________________________________________________
 // controls update timing
-console.log("done");
+document.addEventListener("DOMContentLoaded", () => {
+
+	let TParser = require("./src/parser.js");
+
+	TParser.parse("testing", {
+		"title": "Test title",
+		"label": "Test label",
+		"row": [
+			{ "label": "item label 1" },
+			{ "label": "item label 2" }
+		]
+	});
+
+	console.log("done");
+});
+
+//_____________________________________________________________________________________________
+//

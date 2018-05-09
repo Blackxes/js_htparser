@@ -54,7 +54,7 @@ class HTMLParser {
 			return false;
 
 		let content = this._parse(
-			this._prepareTemplate(this.templates[template]),
+			this._prepareTemplate(this.getTemplate(templateid)),
 			this._prepareMarkup(markup)
 		);
 		
@@ -79,6 +79,8 @@ class HTMLParser {
 
 		while ( match = regex.exec(template) )
 			console.log(match[1]);
+
+		return true;
 		
 		for (let key in markup) {
 
@@ -163,11 +165,20 @@ class HTMLParser {
 	}
 
 	//_________________________________________________________________________________________
+	// returns a template
+	getTemplate(templateid) {
+
+		if (!this.templates[templateid])
+			return false;
+		
+		return this.templates[templateid];			
+	}
+
+	//_________________________________________________________________________________________
 	// 
-
-
+	
 }
-module.exports = new HTMLParser();
 
 //_____________________________________________________________________________________________
 //
+module.exports = new HTMLParser();
