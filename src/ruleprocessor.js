@@ -9,18 +9,17 @@
 
 /*********************************************************************************************/
 
-
+// var Parser = require ("./parser.js");
 
 //_____________________________________________________________________________________________
-class Processing {
+class ProcessorClass {
 
 	//_________________________________________________________________________________________
-	constructor() {
-	}
+	constructor() {}
 
 	//_________________________________________________________________________________________
 	// replaces current scope with the result of another template
-	template(templateid) {
+	template(template, markup, value) {
 
 		let content = "";
 
@@ -29,25 +28,41 @@ class Processing {
 
 	//_________________________________________________________________________________________
 	// repeats inner content until condition is false
-	row_start(rowid) {
+	foreach(process) {
 
-		console.log("row: %s", id);
+		console.log(process);
+
+		throw new Error();
+
+		// Todo: implement display of invalid values
+		// if ( !process.markerValue || process.markerValue && process.markerValue.constructor !== Array )
+		// 	return "";
+		
+		// let content = "";
+		
+		// Todo: implement display of invalid values
+		// process.markerValue.forEach( (value, index) => {
+		// 	content += (require ("./parser.js"))._parseTemplate(process.markerTemplate, value, (subProcess) => {
+		// 		return subProcess.markerValue;
+		// 	});
+		// });
+		
 		return "";
 	}
 
 	//_________________________________________________________________________________________
-	// catches row
-	row_end(rowid) {
-		console.log("row: %s", id);
+	// displays the current process markup
+	debug(process) {
+
+		// console.log(process);
+
 		return "";
 	}
 	
-	
-
 	//_________________________________________________________________________________________
 	//
 }
 
 //_____________________________________________________________________________________________
 //
-module.exports = new Processing();
+module.exports = new ProcessorClass();

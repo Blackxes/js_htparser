@@ -17,16 +17,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
 	let TParser = require("./src/parser.js");
 
-	TParser.parse("testing", {
+	document.getElementsByClassName("board")[0].innerHTML = TParser.parse("testing", {
 		"title": "Test title",
-		"label": "Test label",
 		"row": [
-			{ "label": "item label 1" },
-			{ "label": "item label 2" }
-		]
+			{ "label1": "item1 label 1", "label2": "item1 label 2" },
+		],
+		"label": "Test label",
 	});
-
-	console.log("done");
 });
 
 //_____________________________________________________________________________________________
