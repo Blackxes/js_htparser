@@ -72,3 +72,40 @@ More under "operator" functions.
 ## [ value ]
 the value is important for commands to know which index to use in the
 markup. When no value is given no content will be created.
+
+---
+# Commands
+
+## [ foreach ]
+foreach is like the foreach you know. It loops through the defined markup
+value and parses every single item.
+
+```html
+<!-- template -->
+<template template-id="fruit_template">
+	{{ foreach start: fruits }}
+		<p>{{ fruit }}</p>
+	{{ foreach end: fruits }}
+</template>
+```
+
+```javascript
+// markup
+var markup = {
+	"fruits": [
+		{ "fruit": "apple" },
+		{ "fruit": "orange" },
+		{ "fruit": "banana" }
+	]
+}
+
+var parser = require ("./parser").parser;
+var content = parser.parse( "fruit_template", markup );
+```
+
+```html
+<!-- result -->
+<p>apple</p>
+<p>orange</p>
+<p>banana</p>
+```

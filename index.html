@@ -32,6 +32,13 @@
 				{{ foreach end: value }}
 			</template>
 
+			<!-- template -->
+			<template template-id="fruit_template">
+				{{ foreach start: fruits }}
+					<p>{{ fruit }}</p>
+				{{ foreach end: fruits }}
+			</template>
+
 			<!-- test template -->
 			<template template-id="testing">				
 				<ul>
