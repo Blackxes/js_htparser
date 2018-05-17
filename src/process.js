@@ -1,7 +1,7 @@
 //_____________________________________________________________________________________________
 /**********************************************************************************************
 
-	main entry point
+	Todo: edit file description
 
 	@Author: Alexander Bassov
 	@Email: blackxes@gmx.de
@@ -9,27 +9,23 @@
 
 /*********************************************************************************************/
 
-
+var exports = module.exports = {};
 
 //_____________________________________________________________________________________________
-// controls update timing
-document.addEventListener("DOMContentLoaded", () => {
+// process class / containg information about the current processing rule
+exports.process = class ProcessClass {
 
-	let parser = require("./src/parser.js").parser;
-
-	document.getElementsByClassName("board")[0].innerHTML = parser.parse("testing", {
+	//_________________________________________________________________________________________
+	constructor(rule, template, markup) {
 		
-		"title": "was ist das für eine bullshit scheiße, ich weißt doch das",
-		"title3": "Another title",
-		"row": [
-			{ "label1": "item1", "label2": "wusa", },
-			{ "label1": "item1", "label2": "kaka", }
-		],
-		"label": "Test label",
-	});
+		this.rule = rule || null;
+		this.template = template || null;
+		this.markup = markup || null;
+	}
 
-	return true;
-});
+	//_________________________________________________________________________________________
+	//
+}
 
 //_____________________________________________________________________________________________
 //

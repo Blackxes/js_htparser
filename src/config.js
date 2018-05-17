@@ -9,43 +9,39 @@
 //
 //*********************************************************************************************
 
+var exports = module.exports = {};
+
+// general configuration
+exports.config = {};
+
 //_____________________________________________________________________________________________
-(() => {
-	//
-	"use strict";
+// regex for extracting and filtering
+exports.regex = {}
 
-	// global objects
-	var txTOParser = {};
-	txTOParser.Config = {};	
-	txTOParser.Debug = {};
-	
-	// parsed content
-	txTOParser.parsedContent = "";
-	
-	// global permission to parse
-	txTOParser.Config.parse = true;
+// matches a rule within a template
+exports.regex.extract_rule = HP_REGEX_EXTRACT_RULE = function () { return new RegExp("{{([^<>{}]*)}}", "g"); }
 
-	// permission to automatically initialize the manager
-	// and load every template containing a valid otp attribute
-	txTOParser.Config.autoload = true;
+// filters a rule into the specific parts
+// const HP_REGEX_FILTER_RULE = function() { return new RegExp(`{{\\s*(\\w+)\\s*(\\w*)[:]\\s*([\\w+\\.]*)\\s*|{{\\s*(\\w+)\\s*}}`, "g"); }
+exports.regex.filter_rule = HP_REGEX_FILTER_RULE = function() { return new RegExp("{{\\s*(\\w+)\\s*(\\w*)[:]\\s*(\\w*)\\s*}}|{{\\s*(\\w+)\\s*}}", "g"); }
 
-	// defines wether the templates shall be preparsed
-	// if conditions are excluded! they are checked when template builds
-	txTOParser.Config.preParseTemplates = false;
-	
-	// insert content into the dom when parsed
-	txTOParser.Config.insertToDom = true;
-	
-	// element in which the parsed content shall be inserted
-	txTOParser.Config.contentSelector = "#site";
-	
-	// checks the objects within the given template to preserve errors
-	// and log when incorrect objects encountered / use this for debugging
-	txTOParser.Debug.checkTObject = true;
+// matches a complete substring from the template including content (can be accessed via group)
+exports.regex.extract_area = HP_REGEX_EXTRACT_AREA = function(request, value) { return new RegExp(`{{\\s*${request}\\s+start\\s*:\\s*${value}\\s*}}(.*){{\\s*${request}\\s+end\\s*:\\s*${value}\\s*}}`, "g"); }
 
-
-	// contains every loaded template / id : template content
-	txTOParser.Templates = {};
-	
 //_____________________________________________________________________________________________
-})();
+// debugging stuff when working with the library
+// Todo: implement debuggin usage
+// exports.config.debug = {};
+
+// displays every invalid value within the template
+// exports.config.debug.displayInvalidValues = true;
+// exports.config.debug.displayInvalidValuesAttributes = {
+// 	"request": true,
+// 	"operator": true,
+// 	"key": true,
+// 	"template": true,
+// 	"value": true
+// };
+
+//_____________________________________________________________________________________________
+//

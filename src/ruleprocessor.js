@@ -9,54 +9,125 @@
 
 /*********************************************************************************************/
 
-// var Parser = require ("./parser.js");
+var exports = module.exports = {}
+
+var HP_Config = require ("./config.js");
+var HP_Process = require ("./process.js").process;
+var HP_ProcessResponse = require ("./processresponse.js").processResponse;
 
 //_____________________________________________________________________________________________
-class ProcessorClass {
+exports.ruleProcessing = new class RuleProcessingClass {
 
 	//_________________________________________________________________________________________
 	constructor() {}
 
 	//_________________________________________________________________________________________
-	// replaces current scope with the result of another template
-	template(template, markup, value) {
+	// parses the given rule
+	parse( rule ) {
 
+		// initial definition
+		let response = new HP_ProcessResponse(rule.rule, rule.markup);
+
+		// on empty request
+		// due to the way the parsing works this automatically being replaced with empty content
+		if ( !rule.request ) {
+			console.log("Missing Request: %o", rule.rule);
+			// Todo: implement display of empty requests
+		}
+		
+		// on a simple marker
+		else if ( !rule.key ) {
+			if ( rule.markup === undefined )
+				console.log("Missing Key: %s", rule.request);
+			// Todo: implement display of invalid values (when marker is missing value)
+		}
+		
+		// on command request / with(out) operator
+		else if ( rule.request ) {
+
+			// single commands
+			let func = `${rule.request}${ rule.operator ? "_" + rule.operator : "" }`;
+
+			if ( func in this ) {
+				let result = this[func]( new HP_Process(rule, rule.template, rule.markup) );
+				response = result || response;
+			}
+
+			else
+				console.log("Invalid Request: '%s'", rule.request);
+		}
+
+		return response;
+	}
+
+	//_________________________________________________________________________________________
+	// replaces current scope with the result of another template
+	template( process ) {
+		
+		let parser = require ("./parser.js").parser;
 		let content = "";
 
-		return "";
+		// Todo: implement display of invalid values
+		if ( parser.hasTemplate(process.rule.key) )
+			content = parser.parse(process.rule.key, process.markup);
+			
+		let response = new HP_ProcessResponse( process.rule.rule, content );
+
+		return response;
 	}
 
 	//_________________________________________________________________________________________
 	// repeats inner content until condition is false
-	foreach(process) {
-
-		console.log(process);
-
-		throw new Error();
-
-		// Todo: implement display of invalid values
-		// if ( !process.markerValue || process.markerValue && process.markerValue.constructor !== Array )
-		// 	return "";
-		
-		// let content = "";
+	foreach_start( process ) {
 		
 		// Todo: implement display of invalid values
-		// process.markerValue.forEach( (value, index) => {
-		// 	content += (require ("./parser.js"))._parseTemplate(process.markerTemplate, value, (subProcess) => {
-		// 		return subProcess.markerValue;
-		// 	});
-		// });
+		if ( !process.rule || process.markup && process.markup.constructor !== Array )
+			return null;
 		
-		return "";
+		// Todo: implement display of invalid subtemplate / base template as backup is used
+		let template = HP_Config.regex.extract_area("foreach", process.rule.key).exec(process.template);
+		let indexTemplate = template[1] || process.template;
+		let content = "";
+		let parser = require ("./parser.js").parser;
+		
+		// Todo: implement display of invalid markups
+		process.markup.forEach( (markup, index) => {
+			content += parser._parseTemplate(indexTemplate, markup) || "";
+		});
+		
+		let response = new HP_ProcessResponse( template[0], content );
+		
+		return response;
 	}
 
 	//_________________________________________________________________________________________
 	// displays the current process markup
 	debug(process) {
+		
+		let parser = require ("./parser.js");
+		let content = "";
+		let markup = {};
 
-		// console.log(process);
+		// when undefined value given
+		if ( process.markup === null )
+			content = "Undefined";
+		
+		// when array or object
+		else if ( process.markup.constructor === Array || process.markup.constructor === Object ) {
+			for (let i in process.markup) {
+				let item = process.markup[i];
 
-		return "";
+				content += item + "<br>";
+			}
+		}
+
+		// when a simple value
+		else
+			content = process.markup;
+
+		let response = new HP_ProcessResponse( process.rule.rule, content );
+
+		return response;
 	}
 	
 	//_________________________________________________________________________________________
@@ -65,4 +136,3 @@ class ProcessorClass {
 
 //_____________________________________________________________________________________________
 //
-module.exports = new ProcessorClass();

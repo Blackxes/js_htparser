@@ -1,0 +1,35 @@
+
+one process through a rule
+
+Rule: {{ title }}
+
+# template being parsed
+
+RuleClass
+	- rule
+	- request
+	- operator
+	- key
+	- template
+	- value
+
+# passing into the match parser
+
+# build process based on the given request type
+
+Types:	marker
+		single command
+		area command
+
+ProcessClass
+	- template
+	- markup
+
+# response of the processing function
+ProcessResponseClass
+	- replacement
+	- value
+	
+
+
+

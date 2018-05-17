@@ -16,350 +16,73 @@
 // controls update timing
 document.addEventListener("DOMContentLoaded", () => {
 
-	let TParser = require("./src/parser.js");
+	let parser = require("./src/parser.js").parser;
 
-	document.getElementsByClassName("board")[0].innerHTML = TParser.parse("testing", {
-		"title": "Test title",
+	document.getElementsByClassName("board")[0].innerHTML = parser.parse("testing", {
+		
+		"title": "was ist das für eine bullshit scheiße, ich weißt doch das",
+		"title3": "Another title",
 		"row": [
-			{ "label1": "item1 label 1", "label2": "item1 label 2" },
+			{ "label1": "item1", "label2": "wusa", },
+			{ "label1": "item1", "label2": "kaka", }
 		],
 		"label": "Test label",
 	});
+
+	return true;
 });
 
 //_____________________________________________________________________________________________
 //
-},{"./src/parser.js":4}],2:[function(require,module,exports){
-// shim for using process in browser
-var process = module.exports = {};
-
-// cached from whatever global is present so that test runners that stub it
-// don't break things.  But we need to wrap it in a try catch in case it is
-// wrapped in strict mode code which doesn't define any globals.  It's inside a
-// function because try/catches deoptimize in certain engines.
-
-var cachedSetTimeout;
-var cachedClearTimeout;
-
-function defaultSetTimout() {
-    throw new Error('setTimeout has not been defined');
-}
-function defaultClearTimeout () {
-    throw new Error('clearTimeout has not been defined');
-}
-(function () {
-    try {
-        if (typeof setTimeout === 'function') {
-            cachedSetTimeout = setTimeout;
-        } else {
-            cachedSetTimeout = defaultSetTimout;
-        }
-    } catch (e) {
-        cachedSetTimeout = defaultSetTimout;
-    }
-    try {
-        if (typeof clearTimeout === 'function') {
-            cachedClearTimeout = clearTimeout;
-        } else {
-            cachedClearTimeout = defaultClearTimeout;
-        }
-    } catch (e) {
-        cachedClearTimeout = defaultClearTimeout;
-    }
-} ())
-function runTimeout(fun) {
-    if (cachedSetTimeout === setTimeout) {
-        //normal enviroments in sane situations
-        return setTimeout(fun, 0);
-    }
-    // if setTimeout wasn't available but was latter defined
-    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
-        cachedSetTimeout = setTimeout;
-        return setTimeout(fun, 0);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedSetTimeout(fun, 0);
-    } catch(e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
-            return cachedSetTimeout.call(null, fun, 0);
-        } catch(e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
-            return cachedSetTimeout.call(this, fun, 0);
-        }
-    }
-
-
-}
-function runClearTimeout(marker) {
-    if (cachedClearTimeout === clearTimeout) {
-        //normal enviroments in sane situations
-        return clearTimeout(marker);
-    }
-    // if clearTimeout wasn't available but was latter defined
-    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
-        cachedClearTimeout = clearTimeout;
-        return clearTimeout(marker);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedClearTimeout(marker);
-    } catch (e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
-            return cachedClearTimeout.call(null, marker);
-        } catch (e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
-            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
-            return cachedClearTimeout.call(this, marker);
-        }
-    }
-
-
-
-}
-var queue = [];
-var draining = false;
-var currentQueue;
-var queueIndex = -1;
-
-function cleanUpNextTick() {
-    if (!draining || !currentQueue) {
-        return;
-    }
-    draining = false;
-    if (currentQueue.length) {
-        queue = currentQueue.concat(queue);
-    } else {
-        queueIndex = -1;
-    }
-    if (queue.length) {
-        drainQueue();
-    }
-}
-
-function drainQueue() {
-    if (draining) {
-        return;
-    }
-    var timeout = runTimeout(cleanUpNextTick);
-    draining = true;
-
-    var len = queue.length;
-    while(len) {
-        currentQueue = queue;
-        queue = [];
-        while (++queueIndex < len) {
-            if (currentQueue) {
-                currentQueue[queueIndex].run();
-            }
-        }
-        queueIndex = -1;
-        len = queue.length;
-    }
-    currentQueue = null;
-    draining = false;
-    runClearTimeout(timeout);
-}
-
-process.nextTick = function (fun) {
-    var args = new Array(arguments.length - 1);
-    if (arguments.length > 1) {
-        for (var i = 1; i < arguments.length; i++) {
-            args[i - 1] = arguments[i];
-        }
-    }
-    queue.push(new Item(fun, args));
-    if (queue.length === 1 && !draining) {
-        runTimeout(drainQueue);
-    }
-};
-
-// v8 likes predictible objects
-function Item(fun, array) {
-    this.fun = fun;
-    this.array = array;
-}
-Item.prototype.run = function () {
-    this.fun.apply(null, this.array);
-};
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-process.version = ''; // empty string to avoid regexp issues
-process.versions = {};
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-process.prependListener = noop;
-process.prependOnceListener = noop;
-
-process.listeners = function (name) { return [] }
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-};
-
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-process.umask = function() { return 0; };
-
-},{}],3:[function(require,module,exports){
+},{"./src/parser.js":3}],2:[function(require,module,exports){
 //_____________________________________________________________________________________________
-/**********************************************************************************************
+//*********************************************************************************************
+//
+//	defaults and configuration
+//
+//	Author: Alexander Bassov
+//	Email: blackxes@gmx.de
+//	Github: https://github.com/Blackxes
+//
+//*********************************************************************************************
 
-	parses a match within a template
+var exports = module.exports = {};
 
-	@Author: Alexander Bassov
-	@Email: blackxes@gmx.de
-	@Github: https://www.github.com/Blackxes
+// general configuration
+exports.config = {};
 
-/*********************************************************************************************/
+//_____________________________________________________________________________________________
+// regex for extracting and filtering
+exports.regex = {}
 
+// matches a rule within a template
+exports.regex.extract_rule = HP_REGEX_EXTRACT_RULE = function () { return new RegExp("{{([^<>{}]*)}}", "g"); }
 
-
-// includes
-var Parser = require ("./parser.js");
+// filters a rule into the specific parts
+// const HP_REGEX_FILTER_RULE = function() { return new RegExp(`{{\\s*(\\w+)\\s*(\\w*)[:]\\s*([\\w+\\.]*)\\s*|{{\\s*(\\w+)\\s*}}`, "g"); }
+exports.regex.filter_rule = HP_REGEX_FILTER_RULE = function() { return new RegExp("{{\\s*(\\w+)\\s*(\\w*)[:]\\s*(\\w*)\\s*}}|{{\\s*(\\w+)\\s*}}", "g"); }
 
 // matches a complete substring from the template including content (can be accessed via group)
-const HP_REGEX_AREA = function(request, value) { return new RegExp(`{{\\s*${request}\\s+start\\s*:\\s*${value}\\s*}}(.*){{\\s*${request}\\s+end\\s*}}`, "g"); }
+exports.regex.extract_area = HP_REGEX_EXTRACT_AREA = function(request, value) { return new RegExp(`{{\\s*${request}\\s+start\\s*:\\s*${value}\\s*}}(.*){{\\s*${request}\\s+end\\s*:\\s*${value}\\s*}}`, "g"); }
 
 //_____________________________________________________________________________________________
-// represents a command with its information
-class CommandClass {
-	constructor(name, value) {
-		this.name = name || null;
-		this.value = value || null;
-	}
-}
+// debugging stuff when working with the library
+// Todo: implement debuggin usage
+// exports.config.debug = {};
 
-//_____________________________________________________________________________________________
-// process class / contains information about the current processing marker/command section
-// within the template
-class ProcessClass {
-	constructor(request, value, template, replacement) {
-		this.request = request || null;
-		this.value = value || null;
-		this.template = template || null;
-		this.replacement = replacement || null;
-	}
-}
-
-//_____________________________________________________________________________________________
-class MatchParserClass {
-
-	//_________________________________________________________________________________________
-	constructor() {
-		
-		this.ruleprocessor = require ("./ruleprocessor.js");
-	}
-
-	//_________________________________________________________________________________________
-	// extracts the command, command value and the subtemplate of the marker
-	parse(rule) {
-		
-		let process = new ProcessClass();
-
-		console.log(rule);
-
-		throw new Error();
-
-		// on empty request
-		if ( !rule.request )
-			return process;
-		
-		// on command request
-		else if ( rule.request in this.ruleprocessor ) {
-
-			process = this.ruleprocessor[rule.request]( rule );
-			
-			// console.log(process);
-
-			return process;
-		}
-
-		// on simple marker
-		else if ( !(rule.request in this) && (rule.value) ) {
-			process.value = rule.value;
-			process.request = rule.request;
-		}
-
-		// process.regexIndex = 4;
-
-		return process;
-		
-		//----------------------------
-		// extract values
-		//
-		// basic: {{ request(_start) : commandValue - arguments }} ( content {{ request : commandValue }} )
-		// markerTemplate: content
-		// replacement: {{ request : secondary - tertiary }} content {{ request }}
-		//
-		// with round brackets surrounded sections are optional - depending on the case
-		// in that case the secondary/content/closing marker is not defined
-
-		// request either a command or a marker
-		// let requestParts = match[1].split(/[_\s]/);
-		// let request = requestParts[0].trim();
-		
-		// // request value / only defined when a command is given
-		// let value = match[2].trim();
-
-		// Idea: implement arguments for commands besides the value itself
-		// let tertiaryValue = null;
-
-		//----------------------------
-		// build process
-
-		// on empty command
-		if ( !value )
-			return process;
-
-		// on defined single command / not existing !
-		else if ( requestParts[1].toLowerCase() === "start" && request && value )
-			return this.buildCommandProcess();
-		
-
-		return process;
-	}
-	
-	//_________________________________________________________________________________________
-	// builds a command process
-	buildCommandProcess(match) {
-	}
-
-	//_________________________________________________________________________________________
-	// builds a marker process
-	buildMarkerProcess(match) {
-
-	}
-
-	//_________________________________________________________________________________________
-	// builds an area process
-	buildAreaProcess(match) {
-
-		// console.log()
-	}
-
-}
-var MatchParser = new MatchParserClass();
+// displays every invalid value within the template
+// exports.config.debug.displayInvalidValues = true;
+// exports.config.debug.displayInvalidValuesAttributes = {
+// 	"request": true,
+// 	"operator": true,
+// 	"key": true,
+// 	"template": true,
+// 	"value": true
+// };
 
 //_____________________________________________________________________________________________
 //
-module.exports = MatchParser;
-},{"./parser.js":4,"./ruleprocessor.js":5}],4:[function(require,module,exports){
-(function (process){
+},{}],3:[function(require,module,exports){
 //_____________________________________________________________________________________________
 /**********************************************************************************************
 
@@ -371,37 +94,17 @@ module.exports = MatchParser;
 
 /*********************************************************************************************/
 
+var exports = module.exports = {};
 
-
-// regex to match/extract sub strings within a template
-//
-// matches a rule within a template
-const HP_REGEX_EXTRACT_RULE = function () { return new RegExp("{{([^<>])*}}", "g"); }
-
-// filters a rule into the specific parts
-// const HP_REGEX_FILTER_RULE = function() { return new RegExp(`{{\\s*(\\w+)\\s*(\\w*)[:]\\s*([\\w+\\.]*)\\s*|{{\\s*(\\w+)\\s*}}`, "g"); }
-const HP_REGEX_FILTER_RULE = function() { return new RegExp("{{\\s*(\\w+)\\s*(\\w*)[:]\\s*(\\w*)\\s*}}|{{\\s*(\\w+)\\s*}}", "g"); }
+var HP_Config = require ("./config.js");
+var HP_RuleProcessor = require ("./ruleprocessor.js").ruleProcessing;
+var HP_Rule = require ("./rule.js").rule;
 
 //_____________________________________________________________________________________________
-// contains information about the current rule and its values
-class RuleClass {
-	constructor(rule, request, operator, key, value, template) {
-		this.rule = rule || null;
-		this.request = request || null;
-		this.operator = operator || null;
-		this.key = key || null;
-		this.value = value || null;
-		this.template = template || null;
-	}
-}
-
-//_____________________________________________________________________________________________
-class HTMLParserClass {
+exports.parser = new class HTMLParserClass {
 
 	//_________________________________________________________________________________________
 	constructor() {
-		
-		this.matchparser = require ("./matchparser.js");
 
 		this.templates = {};
 		this.processingMarkup;
@@ -443,74 +146,46 @@ class HTMLParserClass {
 		let template = this.templates[template_id];
 		let markup = (_markup) ? _markup : {};
 		
-		let content = this._parseTemplate(template, markup, (process) => {
-
-			
-			
-			// process subpart within template in processing function
-			if (process.commandName in this.processor) {
-				return this.processor[process.commandName](process);
-			}
-
-			// else return marker value
-			return process.markerValue;
-		});
-		
-		console.log("-------------------\nContent: \n%s", content);
-		
-		return content;
+		return this._parseTemplate(template, markup);
 	}
 
 	//_________________________________________________________________________________________
-	// executes the marker regex onto the template and the callback / 2 params are passed
-	// command|marker (string) either its the command eg. "for" or "command" or the marker
-	// value (string) the value of the command eg. its id
-	//		nothing is passed when the command is a marker
-	// subpart (string) the sub string from the template when a command is given
-	//		will be replaced by the returned content of the command function
-	// 
-	_parseTemplate(template, markup, callback) {
+	// actual template parsing
+	_parseTemplate(template, markup) {
 
-		if ( !template || markup && markup.constructor !== Object || !callback || callback && callback.constructor !== Function )
+		if ( !template || markup && markup.constructor !== Object )
 			return false;
 		
 		let content = template;
 		
 		// extract and parse marker within template
 		let match = null;
-		let regexExtractRule = HP_REGEX_EXTRACT_RULE();
+		let regexExtractRule = HP_Config.regex.extract_rule();
 		
 		while ( match = regexExtractRule.exec(content) ) {
 			
-			// rule pieces
-			// 0 = full rule match
-			// 1 = request
-			// 2 = operator
-			// 3 = value
-			// 4 = marker / this is used as request when no command is defined
-			//
-			let pieces = HP_REGEX_FILTER_RULE().exec(match[0]);
-			
-			let rule = new RuleClass(
-				pieces[0],									// complete rul
-				pieces[1] || pieces[4],						// request / either the command or the marker
-				pieces[2],									// operator / not implement so far
-				pieces[3],									// key of the request
-				markup[pieces[4]], 							// value of the markup
-				match[1]									// template of the match
+			// Match: match/rule, request, operator, key, markerkey
+			// Rule: rule, request, operator, key, template, markup
+			let pieces = HP_Config.regex.filter_rule().exec(match[0]) || {};
+
+			let rule = new HP_Rule(
+				pieces[0] || match[0],				// complete rule / when not given use match
+				pieces[1] || pieces[4],				// request / either the command or the marker
+				pieces[2],							// operator / not implement so far
+				pieces[3],							// key of the request
+				template,							// template of the match
+				markup[pieces[4] || pieces[3]]		// value of the markup
 			);
+			
+			let response = HP_RuleProcessor.parse( rule );
 
-			let process = this.matchparser.parse( rule, content );
+			// Todo: implement display of empty values / specifically undefined and null (not empty strings!)
+			content = content.replace( response.replacement, response.value );
 
-			// update regex index since the content might changed
-			regexExtractRule.lastIndex = process.regexIndex || regexExtractRule.lastIndex;
-
-			console.log(process);
-
-			// let result = callback( process );
+			// adjust regex last index because the content changed
+			// to ensure the search get all rules this is needed
+			regexExtractRule.lastIndex -= response.replacement.length - response.value.length || 0;
 		}
-		
-		throw new Error();
 		
 		return content;
 	}
@@ -538,9 +213,106 @@ class HTMLParserClass {
 
 //_____________________________________________________________________________________________
 //
-module.exports = new HTMLParserClass();
-}).call(this,require('_process'))
-},{"./matchparser.js":3,"_process":2}],5:[function(require,module,exports){
+},{"./config.js":2,"./rule.js":6,"./ruleprocessor.js":7}],4:[function(require,module,exports){
+//_____________________________________________________________________________________________
+/**********************************************************************************************
+
+	Todo: edit file description
+
+	@Author: Alexander Bassov
+	@Email: blackxes@gmx.de
+	@Github: https://www.github.com/Blackxes
+
+/*********************************************************************************************/
+
+var exports = module.exports = {};
+
+//_____________________________________________________________________________________________
+// process class / containg information about the current processing rule
+exports.process = class ProcessClass {
+
+	//_________________________________________________________________________________________
+	constructor(rule, template, markup) {
+		
+		this.rule = rule || null;
+		this.template = template || null;
+		this.markup = markup || null;
+	}
+
+	//_________________________________________________________________________________________
+	//
+}
+
+//_____________________________________________________________________________________________
+//
+},{}],5:[function(require,module,exports){
+//_____________________________________________________________________________________________
+/**********************************************************************************************
+
+	Todo: edit file description
+
+	@Author: Alexander Bassov
+	@Email: blackxes@gmx.de
+	@Github: https://www.github.com/Blackxes
+
+/*********************************************************************************************/
+
+var exports = module.exports = {};
+
+//_____________________________________________________________________________________________
+// process class / containg information about the current processing rule
+exports.processResponse = class ProcessResponseClass {
+
+	//_________________________________________________________________________________________
+	constructor(replacement, value) {
+		
+		this.replacement = replacement || "";
+		this.value = value || "";
+	}
+
+	//_________________________________________________________________________________________
+	//
+}
+
+//_____________________________________________________________________________________________
+//
+},{}],6:[function(require,module,exports){
+//_____________________________________________________________________________________________
+/**********************************************************************************************
+
+	a rule is a set of information given by a definition within a template
+
+	@Author: Alexander Bassov
+	@Email: blackxes@gmx.de
+	@Github: https://www.github.com/Blackxes
+
+/*********************************************************************************************/
+
+var exports = module.exports = {};
+
+//_____________________________________________________________________________________________
+// contains information about the current rule and its values
+exports.rule = class RuleClass {
+
+	//_________________________________________________________________________________________
+	constructor(rule, request, operator, key, template, markup) {
+
+		this.rule = rule || null;
+		this.request = request || null;
+		this.operator = operator || null;
+		this.key = key || null;
+		this.template = template || null;
+		this.markup = markup || null;
+	}
+
+	//_________________________________________________________________________________________
+	//
+
+}
+
+//_____________________________________________________________________________________________
+//
+},{}],7:[function(require,module,exports){
 //_____________________________________________________________________________________________
 /**********************************************************************************************
 
@@ -552,54 +324,125 @@ module.exports = new HTMLParserClass();
 
 /*********************************************************************************************/
 
-// var Parser = require ("./parser.js");
+var exports = module.exports = {}
+
+var HP_Config = require ("./config.js");
+var HP_Process = require ("./process.js").process;
+var HP_ProcessResponse = require ("./processresponse.js").processResponse;
 
 //_____________________________________________________________________________________________
-class ProcessorClass {
+exports.ruleProcessing = new class RuleProcessingClass {
 
 	//_________________________________________________________________________________________
 	constructor() {}
 
 	//_________________________________________________________________________________________
-	// replaces current scope with the result of another template
-	template(template, markup, value) {
+	// parses the given rule
+	parse( rule ) {
 
+		// initial definition
+		let response = new HP_ProcessResponse(rule.rule, rule.markup);
+
+		// on empty request
+		// due to the way the parsing works this automatically being replaced with empty content
+		if ( !rule.request ) {
+			console.log("Missing Request: %o", rule.rule);
+			// Todo: implement display of empty requests
+		}
+		
+		// on a simple marker
+		else if ( !rule.key ) {
+			if ( rule.markup === undefined )
+				console.log("Missing Key: %s", rule.request);
+			// Todo: implement display of invalid values (when marker is missing value)
+		}
+		
+		// on command request / with(out) operator
+		else if ( rule.request ) {
+
+			// single commands
+			let func = `${rule.request}${ rule.operator ? "_" + rule.operator : "" }`;
+
+			if ( func in this ) {
+				let result = this[func]( new HP_Process(rule, rule.template, rule.markup) );
+				response = result || response;
+			}
+
+			else
+				console.log("Invalid Request: '%s'", rule.request);
+		}
+
+		return response;
+	}
+
+	//_________________________________________________________________________________________
+	// replaces current scope with the result of another template
+	template( process ) {
+		
+		let parser = require ("./parser.js").parser;
 		let content = "";
 
-		return "";
+		// Todo: implement display of invalid values
+		if ( parser.hasTemplate(process.rule.key) )
+			content = parser.parse(process.rule.key, process.markup);
+			
+		let response = new HP_ProcessResponse( process.rule.rule, content );
+
+		return response;
 	}
 
 	//_________________________________________________________________________________________
 	// repeats inner content until condition is false
-	foreach(process) {
-
-		console.log(process);
-
-		throw new Error();
-
-		// Todo: implement display of invalid values
-		// if ( !process.markerValue || process.markerValue && process.markerValue.constructor !== Array )
-		// 	return "";
-		
-		// let content = "";
+	foreach_start( process ) {
 		
 		// Todo: implement display of invalid values
-		// process.markerValue.forEach( (value, index) => {
-		// 	content += (require ("./parser.js"))._parseTemplate(process.markerTemplate, value, (subProcess) => {
-		// 		return subProcess.markerValue;
-		// 	});
-		// });
+		if ( !process.rule || process.markup && process.markup.constructor !== Array )
+			return null;
 		
-		return "";
+		// Todo: implement display of invalid subtemplate / base template as backup is used
+		let template = HP_Config.regex.extract_area("foreach", process.rule.key).exec(process.template);
+		let indexTemplate = template[1] || process.template;
+		let content = "";
+		let parser = require ("./parser.js").parser;
+		
+		// Todo: implement display of invalid markups
+		process.markup.forEach( (markup, index) => {
+			content += parser._parseTemplate(indexTemplate, markup) || "";
+		});
+		
+		let response = new HP_ProcessResponse( template[0], content );
+		
+		return response;
 	}
 
 	//_________________________________________________________________________________________
 	// displays the current process markup
 	debug(process) {
+		
+		let parser = require ("./parser.js");
+		let content = "";
+		let markup = {};
 
-		// console.log(process);
+		// when undefined value given
+		if ( process.markup === null )
+			content = "Undefined";
+		
+		// when array or object
+		else if ( process.markup.constructor === Array || process.markup.constructor === Object ) {
+			for (let i in process.markup) {
+				let item = process.markup[i];
 
-		return "";
+				content += item + "<br>";
+			}
+		}
+
+		// when a simple value
+		else
+			content = process.markup;
+
+		let response = new HP_ProcessResponse( process.rule.rule, content );
+
+		return response;
 	}
 	
 	//_________________________________________________________________________________________
@@ -608,5 +451,4 @@ class ProcessorClass {
 
 //_____________________________________________________________________________________________
 //
-module.exports = new ProcessorClass();
-},{}]},{},[1]);
+},{"./config.js":2,"./parser.js":3,"./process.js":4,"./processresponse.js":5}]},{},[1]);

@@ -9,37 +9,17 @@
 
 /*********************************************************************************************/
 
+var exports = module.exports = {};
 
-
-// regex to match/extract sub strings within a template
-//
-// matches a rule within a template
-const HP_REGEX_EXTRACT_RULE = function () { return new RegExp("{{([^<>])*}}", "g"); }
-
-// filters a rule into the specific parts
-// const HP_REGEX_FILTER_RULE = function() { return new RegExp(`{{\\s*(\\w+)\\s*(\\w*)[:]\\s*([\\w+\\.]*)\\s*|{{\\s*(\\w+)\\s*}}`, "g"); }
-const HP_REGEX_FILTER_RULE = function() { return new RegExp("{{\\s*(\\w+)\\s*(\\w*)[:]\\s*(\\w*)\\s*}}|{{\\s*(\\w+)\\s*}}", "g"); }
+var HP_Config = require ("./config.js");
+var HP_RuleProcessor = require ("./ruleprocessor.js").ruleProcessing;
+var HP_Rule = require ("./rule.js").rule;
 
 //_____________________________________________________________________________________________
-// contains information about the current rule and its values
-class RuleClass {
-	constructor(rule, request, operator, key, value, template) {
-		this.rule = rule || null;
-		this.request = request || null;
-		this.operator = operator || null;
-		this.key = key || null;
-		this.value = value || null;
-		this.template = template || null;
-	}
-}
-
-//_____________________________________________________________________________________________
-class HTMLParserClass {
+exports.parser = new class HTMLParserClass {
 
 	//_________________________________________________________________________________________
 	constructor() {
-		
-		this.matchparser = require ("./matchparser.js");
 
 		this.templates = {};
 		this.processingMarkup;
@@ -81,74 +61,46 @@ class HTMLParserClass {
 		let template = this.templates[template_id];
 		let markup = (_markup) ? _markup : {};
 		
-		let content = this._parseTemplate(template, markup, (process) => {
-
-			
-			
-			// process subpart within template in processing function
-			if (process.commandName in this.processor) {
-				return this.processor[process.commandName](process);
-			}
-
-			// else return marker value
-			return process.markerValue;
-		});
-		
-		console.log("-------------------\nContent: \n%s", content);
-		
-		return content;
+		return this._parseTemplate(template, markup);
 	}
 
 	//_________________________________________________________________________________________
-	// executes the marker regex onto the template and the callback / 2 params are passed
-	// command|marker (string) either its the command eg. "for" or "command" or the marker
-	// value (string) the value of the command eg. its id
-	//		nothing is passed when the command is a marker
-	// subpart (string) the sub string from the template when a command is given
-	//		will be replaced by the returned content of the command function
-	// 
-	_parseTemplate(template, markup, callback) {
+	// actual template parsing
+	_parseTemplate(template, markup) {
 
-		if ( !template || markup && markup.constructor !== Object || !callback || callback && callback.constructor !== Function )
+		if ( !template || markup && markup.constructor !== Object )
 			return false;
 		
 		let content = template;
 		
 		// extract and parse marker within template
 		let match = null;
-		let regexExtractRule = HP_REGEX_EXTRACT_RULE();
+		let regexExtractRule = HP_Config.regex.extract_rule();
 		
 		while ( match = regexExtractRule.exec(content) ) {
 			
-			// rule pieces
-			// 0 = full rule match
-			// 1 = request
-			// 2 = operator
-			// 3 = value
-			// 4 = marker / this is used as request when no command is defined
-			//
-			let pieces = HP_REGEX_FILTER_RULE().exec(match[0]);
-			
-			let rule = new RuleClass(
-				pieces[0],									// complete rul
-				pieces[1] || pieces[4],						// request / either the command or the marker
-				pieces[2],									// operator / not implement so far
-				pieces[3],									// key of the request
-				markup[pieces[4]], 							// value of the markup
-				match[1]									// template of the match
+			// Match: match/rule, request, operator, key, markerkey
+			// Rule: rule, request, operator, key, template, markup
+			let pieces = HP_Config.regex.filter_rule().exec(match[0]) || {};
+
+			let rule = new HP_Rule(
+				pieces[0] || match[0],				// complete rule / when not given use match
+				pieces[1] || pieces[4],				// request / either the command or the marker
+				pieces[2],							// operator / not implement so far
+				pieces[3],							// key of the request
+				template,							// template of the match
+				markup[pieces[4] || pieces[3]]		// value of the markup
 			);
+			
+			let response = HP_RuleProcessor.parse( rule );
 
-			let process = this.matchparser.parse( rule, content );
+			// Todo: implement display of empty values / specifically undefined and null (not empty strings!)
+			content = content.replace( response.replacement, response.value );
 
-			// update regex index since the content might changed
-			regexExtractRule.lastIndex = process.regexIndex || regexExtractRule.lastIndex;
-
-			console.log(process);
-
-			// let result = callback( process );
+			// adjust regex last index because the content changed
+			// to ensure the search get all rules this is needed
+			regexExtractRule.lastIndex -= response.replacement.length - response.value.length || 0;
 		}
-		
-		throw new Error();
 		
 		return content;
 	}
@@ -176,4 +128,3 @@ class HTMLParserClass {
 
 //_____________________________________________________________________________________________
 //
-module.exports = new HTMLParserClass();

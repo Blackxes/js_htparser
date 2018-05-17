@@ -25,39 +25,24 @@
 		<div id="sound-sources" class="hide"></div>
 
 		<template id="templates">
-			
-			<template template-id="testing">
 
-				{{ foreach start: row }}
-				<li>
-					<p>{{ label1 }}</p>
-					<p>{{ label2 }}</p>
-				</li>
-				{{ foreach end: row }}
-				
-				<p>{{ title }}</p>
-				<ul>
-				</ul>
+			<!-- for debugging purposes -->
+			<template template-id="hp_debug">
+				{{ foreach start: value }}
+				{{ foreach end: value }}
 			</template>
 
 			<!-- test template -->
-			<!-- <template template-id="testing">
-				<p>{{ title }}</p>
-				<p>{{ label }}</p>
-				{{ template: subtemp }}
+			<template template-id="testing">				
 				<ul>
-					{{ row_start: row }}
-					<li><p>{{ label1 }}</li>
-					<li><p>{{ label2 }}</li>
-					<li><p>{{ label3 }}</li>
-					<li><p>{{ label4 }}</li>
-					<li><p>{{ label5 }}</li>
-					{{ row_end: row }}
+					{{ foreach start: row }}
+					<li><p>{{ label1 }}{{ label2 }}</li>
+					{{ foreach end: row }}
 				</ul>
-			</template> -->
+			</template>
 
 			<template template-id="subtemp">
-				<p>Subtemplate</p>
+				<p>Subtemplate {{ title }}</p>
 			</template>
 		</template>
 	</div>
