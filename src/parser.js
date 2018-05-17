@@ -23,17 +23,15 @@ exports.parser = new class HTMLParserClass {
 
 		this.templates = {};
 		this.processingMarkup;
-
-		this.loadTemplates();
 	}
 
 	//_________________________________________________________________________________________
 	// loads templates from the dom / must be accessable with this selector
 	// template#templates
 	//
-	loadTemplates() {
+	Init() {
 		
-		let raw = document.querySelector("template#templates").content.children;
+		let raw = document.querySelector(exports.config.template + "#" + exports.config.templateAttr).content.children;
 
 		for (let index in raw) {
 

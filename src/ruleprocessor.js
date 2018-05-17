@@ -92,6 +92,7 @@ exports.ruleProcessing = new class RuleProcessingClass {
 		
 		// Todo: implement display of invalid markups
 		process.markup.forEach( (markup, index) => {
+			
 			content += parser._parseTemplate(indexTemplate, markup) || "";
 		});
 		

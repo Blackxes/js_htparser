@@ -7,52 +7,13 @@
 
 	<meta name="author" content="Alexander Bassov">
 
-	<!-- <link rel="shortcut icon" type="image/png" href="./res/icons/favicon.png"/> -->
-	<title>Drum Mixer</title>
-
+	<title>template parser</title>
+	
 	<link rel="stylesheet" type="text/css" href="./style/main.css">
 </head>
 <body>
 
-	<div id="app">
-		<div id="header">
-			<h1 id="page-title">Template Parser Ahoi!</h1>
-		</div>
-		<div id="content">
-			<div class="board"></div>
-		</div>
-		
-		<div id="sound-sources" class="hide"></div>
-
-		<template id="templates">
-
-			<!-- for debugging purposes -->
-			<template template-id="hp_debug">
-				{{ foreach start: value }}
-				{{ foreach end: value }}
-			</template>
-
-			<!-- template -->
-			<template template-id="fruit_template">
-				{{ foreach start: fruits }}
-					<p>{{ fruit }}</p>
-				{{ foreach end: fruits }}
-			</template>
-
-			<!-- test template -->
-			<template template-id="testing">				
-				<ul>
-					{{ foreach start: row }}
-					<li><p>{{ label1 }}{{ label2 }}</li>
-					{{ foreach end: row }}
-				</ul>
-			</template>
-
-			<template template-id="subtemp">
-				<p>Subtemplate {{ title }}</p>
-			</template>
-		</template>
-	</div>
+	<div id="app"></div>
 
 	<script src="./bundle.js"></script>
 </body>
