@@ -26,8 +26,6 @@ a rule looks like the following
 the rule can be written in different ways wheres every writing
 in other inpretation results.
 
----
-
 ## [ request ]
 request have different meaning depending on the value
 
@@ -62,13 +60,11 @@ They look like the following
 when defining such rule its start, end point and content are being replaced
 by the created content from the command
 
----
 ## [ operator ]
 the operator describes what the command has to do.
 An operator has an effect on the outcome of content the command creates.
 More under "operator" functions.
 
----
 ## [ value ]
 the value is important for commands to know which index to use in the
 markup. When no value is given no content will be created.
