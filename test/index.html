@@ -15,5 +15,43 @@
 
 	<div id="app"></div>
 
-	<script src="./bundle.js"></script>
+	<template id="templates">
+
+		<template template-id="test">
+			<h4>Test: {{ test_id }}</h4>
+			<p>Result:</p>
+			{{ template: _template_id }}
+		</template>
+
+		<!-- simple marker replacements testin -->
+		<template template-id="simple_marker_replacement">
+			<h4>Test: "{{ hp_template_id }}"</h4>
+			<p>{{ title }}</p>
+			<p>{{ description }}</p>
+			<p>{{ version }}</p>
+		</template>
+
+		<!-- invalid marker catch testing -->
+		<template template-id="invalid_marker_catch">
+			<h4>Test: "{{ hp_template_id }}"</h4>
+			<p>empty request</p>
+			<p>{{ }}</p>
+			<hr>>
+			<p>invalid command / missing operator / missing key</p>
+			<p>{{ not_existing_command: </p>
+			<hr>
+			<p>missing operator</p>
+			<p>{{ foreach: foreach }}</p>
+		</template>
+
+		<!-- command testing -->
+		<template template-id="command_foreach">
+			<h4>Test: "{{ hp_template_id }}"</h4>
+
+			{{ foreach start: }}
+		</template>
+
+	</template>
+
+	<script src="../index.js"></script>
 </body>
