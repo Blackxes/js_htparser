@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+	<meta name="author" content="Alexander Bassov">
+
+	<title>template parser</title>
+	
+	<link rel="stylesheet" type="text/css" href="./style/main.css">
+</head>
+<body>
+
+	<div id="app"></div>
+
+	<template id="templates">
+
+		<template template-id="test">
+			<h4>Test: {{ test_id }}</h4>
+			<p>Result:</p>
+			{{ template: _template_id }}
+		</template>
+
+		<!-- simple marker replacements testin -->
+		<template template-id="simple_marker_replacement">
+			<h4>Test: "{{ hp_template_id }}"</h4>
+			<p>{{ title }}</p>
+			<p>{{ description }}</p>
+			<p>{{ version }}</p>
+		</template>
+
+		<!-- invalid marker catch testing -->
+		<template template-id="invalid_marker_catch">
+			<h4>Test: "{{ hp_template_id }}"</h4>
+			<p>empty request</p>
+			<p>{{ }}</p>
+			<hr>>
+			<p>invalid command / missing operator / missing key</p>
+			<p>{{ not_existing_command: </p>
+			<hr>
+			<p>missing operator</p>
+			<p>{{ foreach: foreach }}</p>
+		</template>
+
+		<!-- command testing -->
+		<template template-id="command_foreach">
+			<h4>Test: "{{ hp_template_id }}"</h4>
+
+			{{ foreach start: fruits }}
+				<p>{{ fruits }}</p>
+			{{ foreach end: fruits }}
+		</template>
+
+	</template>
+
+	<script src="../index.js"></script>
+</body>
