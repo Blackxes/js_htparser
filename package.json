@@ -1,6 +1,6 @@
 {
   "name": "html_template_parser_v2",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "main": "index.js",
   "scripts": {
     "build": "browserify test/index.js -o test/package.js",
