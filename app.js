@@ -15,6 +15,8 @@
 // controls update timing
 document.addEventListener("DOMContentLoaded", () => {
 
+
+	console.log("ssi");
 	return true;
 });
 
