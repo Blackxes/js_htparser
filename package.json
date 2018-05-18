@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "main": "app.js",
   "scripts": {
-    "build": "browserify app.js -o bundle.js",
-    "watch": "watchify app.js -o bundle.js"
+    "build": "browserify test/index.js -o test/bundle.js",
+    "watch": "watchify test/index.js -o test/bundle.js"
   },
   "author": "Alexander Bassov",
   "license": "ISC",
