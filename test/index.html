@@ -48,7 +48,9 @@
 		<template template-id="command_foreach">
 			<h4>Test: "{{ hp_template_id }}"</h4>
 
-			{{ foreach start: }}
+			{{ foreach start: fruits }}
+				<p>{{ fruits }}</p>
+			{{ foreach end: fruits }}
 		</template>
 
 	</template>
