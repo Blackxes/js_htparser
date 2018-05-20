@@ -1,13 +1,12 @@
 {
   "name": "html_template_parser_v2",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "main": "index.js",
   "scripts": {
     "build": "browserify sandbox/index.js -o index.js",
     "watch": "watchify sandbox/index.js -o index.js",
     "babel": "babel index.js -o index.js",
     "uglify": "uglifyjs index.js -o index.js",
-
     "build_test": "browserify sandbox/sandbox.js -o sandbox/package.js",
     "watch_test": "watchify sandbox/sandbox.js -o sandbox/package.js",
     "babel_test": "babel sandbox/sandbox.js -o sandbox/package.js"
