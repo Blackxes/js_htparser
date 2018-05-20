@@ -29,11 +29,6 @@ exports.regex.filter_rule = HP_REGEX_FILTER_RULE = function() { return new RegEx
 exports.regex.extract_area = HP_REGEX_EXTRACT_AREA = function(request, value) { return new RegExp(`{{\\s*${request}\\s+start\\s*:\\s*${value}\\s*}}(.*){{\\s*${request}\\s+end\\s*:\\s*${value}\\s*}}`, "g"); }
 
 //_____________________________________________________________________________________________
-// selector configuration
-exports.config.templates = "template"
-exports.config.templateAttr = "template-id"
-
-//_____________________________________________________________________________________________
 // rule parsing configuration
 exports.config.ruleParsing = {};
 

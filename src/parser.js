@@ -11,9 +11,9 @@
 
 var exports = module.exports = {};
 
-var HP_Config = require ("./config.js");
-var HP_RuleProcessor = require ("./ruleprocessor.js").ruleProcessing;
-var HP_Rule = require ("./rule.js").rule;
+var HP_Config = require ("./Config.js");
+var HP_RuleProcessor = require ("./RuleProcessor.js");
+var HP_Classes = require ("./Classes.js");
 
 //_____________________________________________________________________________________________
 exports.parser = new class HTMLParserClass {
@@ -23,6 +23,8 @@ exports.parser = new class HTMLParserClass {
 
 		this.templates = {};
 		this.processingMarkup;
+
+		this.Init();
 	}
 
 	//_________________________________________________________________________________________
@@ -31,45 +33,45 @@ exports.parser = new class HTMLParserClass {
 	//
 	Init() {
 		
-		let raw = document.querySelector(exports.config.template + "#" + exports.config.templateAttr).content.children;
+		let raw = document.querySelector("template#templates");
 
-		for (let index in raw) {
+		if (!raw)
+			return true;
+		
+		let children = raw.content.children;
 
-			if (!raw.hasOwnProperty(index))
+		for (let index in children) {
+
+			if (!children.hasOwnProperty(index))
 				continue;
 			
-			let el = raw[index];
+			let el = children[index];
 			let templateid = el.getAttribute("template-id");
 
 			if (!templateid)
 				continue;
 			
-			this.templates [templateid] = el.innerHTML.replace(/\s{2,}/g, "");
+			this.templates[templateid] = el.innerHTML.replace(/\s{2,}/g, "");
 		}
 	}
 
 	//_________________________________________________________________________________________
 	// user entrance function to handle the params correctly
-	parse(template_id, _markup) {
+	parse( _template, markup ) {
 
-		if ( !template_id || _markup && _markup.constructor !== Object || !this.hasTemplate(template_id) )
+		let template = new HP_Classes.template( _template );
+
+		if ( !template.value || markup && markup.constructor !== Object )
 			return false;
-
-		// Todo: implement display of invalid values
-		let template = this.templates[template_id];
-		let markup = (_markup) ? _markup : {};
 		
-		return this._parseTemplate(template, markup);
+		return this._parse( template, markup );
 	}
 
 	//_________________________________________________________________________________________
 	// actual template parsing
-	_parseTemplate(template, markup) {
-
-		if ( !template || markup && markup.constructor !== Object )
-			return false;
+	_parse( template, markup ) {
 		
-		let content = template;
+		let content = template.value;
 		
 		// extract and parse marker within template
 		let match = null;
@@ -77,20 +79,24 @@ exports.parser = new class HTMLParserClass {
 		
 		while ( match = regexExtractRule.exec(content) ) {
 			
-			// Match: match/rule, request, operator, key, markerkey
-			// Rule: rule, request, operator, key, template, markup
+			// Match: 0.match/rule | 1.request | 2.operator | 3.key | 4.marker
+			//
 			let pieces = HP_Config.regex.filter_rule().exec(match[0]) || {};
 
-			let rule = new HP_Rule(
-				pieces[0] || match[0],				// complete rule / when not given use match
-				pieces[1] || pieces[4],				// request / either the command or the marker
-				pieces[2],							// operator / not implement so far
-				pieces[3],							// key of the request
-				template,							// template of the match
-				markup[pieces[4] || pieces[3]]		// value of the markup
+			let query = new HP_Classes.query(
+				pieces[0] || match[0],
+				pieces[4] || pieces[1],
+				pieces[2] || null,
+				pieces[3],
+				template,
+				markup
 			);
 			
-			let response = HP_RuleProcessor.parse( rule );
+			// add additional marker
+			query.markup = this._prepareMarkup( query );
+			query.value = query.markup[ query.key || query.request ];
+
+			let response = HP_RuleProcessor.ruleProcessor.parse( query );
 
 			// Todo: implement display of empty values / specifically undefined and null (not empty strings!)
 			content = content.replace( response.replacement, response.value );
@@ -102,21 +108,57 @@ exports.parser = new class HTMLParserClass {
 		
 		return content;
 	}
+	
+	//_________________________________________________________________________________________
+	// adds additional marker to the markup
+	_prepareMarkup( query ) {
+
+		let prepMarkup = query.markup || {};
+
+		prepMarkup.hp_templateId = query.template.id;
+
+		// kinda senseless / cause these values are defined when using them
+		// {{ hp_rule }} result in {{ hp_rule }}
+		// {{ hp_key }} result in nothing
+		// {{ hp_request }} result for some reason in "request"
+		prepMarkup.hp_rule = query.rule;
+		prepMarkup.hp_key = query.key;
+		prepMarkup.hp_request = query.request;
+
+		if (Math.random() < 0.01)
+			prepMarkup.hp_lel = "Super sick completely hidden easteregg";
+
+		return prepMarkup;
+	}
 
 	//_________________________________________________________________________________________
 	// returns a template
-	getTemplate(template_id) {
+	getTemplate( templateId ) {
 
-		if (!this.templates[template_id])
+		if (!this.templates[templateId])
 			return false;
 		
-		return this.templates[template_id];			
+		return this.templates[templateId];			
+	}
+
+	//_________________________________________________________________________________________
+	// extracts a substring from a string
+	getSubTemplate( _template, request, key ) {
+
+		if ( !_template || !request || !key )
+			return "";
+		
+		let template = this.hasTemplate(_template) ? this.getTemplate(_template) : _template;
+
+		let subtemplate = HP_Config.regex.extract_area(request, key).exec(template)[1];
+		
+		return subtemplate;
 	}
 
 	//_________________________________________________________________________________________
 	// returns the existance of a template
-	hasTemplate(template_id) {
-		return this.templates.hasOwnProperty(template_id);
+	hasTemplate( templateId ) {
+		return this.templates.hasOwnProperty(templateId);
 	}
 
 	//_________________________________________________________________________________________

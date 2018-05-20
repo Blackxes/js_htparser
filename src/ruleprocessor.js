@@ -12,49 +12,49 @@
 var exports = module.exports = {}
 
 var HP_Config = require ("./config.js");
-var HP_Process = require ("./process.js").process;
-var HP_ProcessResponse = require ("./processresponse.js").processResponse;
+var HP_Parser = require ("./Parser.js");
+var HP_Classes = require ("./Classes.js");
 
 //_____________________________________________________________________________________________
-exports.ruleProcessing = new class RuleProcessingClass {
+exports.ruleProcessor = new class RuleProcessorClass {
 
 	//_________________________________________________________________________________________
 	constructor() {}
 
 	//_________________________________________________________________________________________
 	// parses the given rule
-	parse( rule ) {
+	parse( query ) {
 
 		// initial definition
-		let response = new HP_ProcessResponse(rule.rule, rule.markup);
+		let response = new HP_Classes.processResponse( query.rule, query.value );
 
-		// on empty request
-		// due to the way the parsing works this automatically being replaced with empty content
-		if ( !rule.request ) {
-			console.log("Missing Request: %o", rule.rule);
+		// on empty request / due to the way the parsing works
+		// this automatically being replaced with empty content
+		if ( !query.request ) {
+			console.log("Missing Request: %o", query.rule);
 			// Todo: implement display of empty requests
 		}
 		
 		// on a simple marker
-		else if ( !rule.key ) {
-			if ( rule.markup === undefined )
-				console.log("Missing Key: %s", rule.request);
+		else if ( !query.key ) {
+			if ( query.value === undefined )
+				console.log("Missing Key: %s", query.request);
 			// Todo: implement display of invalid values (when marker is missing value)
 		}
 		
 		// on command request / with(out) operator
-		else if ( rule.request ) {
+		else if ( query.request ) {
 
 			// single commands
-			let func = `${rule.request}${ rule.operator ? "_" + rule.operator : "" }`;
+			let func = `${query.request}${ query.operator ? "_" + query.operator : "" }`;
 
 			if ( func in this ) {
-				let result = this[func]( new HP_Process(rule, rule.template, rule.markup) );
+				let result = this[func]( query );
 				response = result || response;
 			}
 
 			else
-				console.log("Invalid Request: '%s'", rule.request);
+				console.log("Invalid Request: '%s'", query.request);
 		}
 
 		return response;
@@ -62,41 +62,48 @@ exports.ruleProcessing = new class RuleProcessingClass {
 
 	//_________________________________________________________________________________________
 	// replaces current scope with the result of another template
-	template( process ) {
-		
-		let parser = require ("./parser.js").parser;
+	template( query ) {
+
 		let content = "";
 
 		// Todo: implement display of invalid values
-		if ( parser.hasTemplate(process.rule.key) )
-			content = parser.parse(process.rule.key, process.markup);
-			
-		let response = new HP_ProcessResponse( process.rule.rule, content );
+		let response = new HP_Classes.processResponse(
+			query.rule,
+			HP_Parser.parser.parse(query.key, query.markup[query.key])
+		);
 
 		return response;
 	}
 
 	//_________________________________________________________________________________________
 	// repeats inner content until condition is false
-	foreach_start( process ) {
+	foreach_start( query ) {
 		
 		// Todo: implement display of invalid values
-		if ( !process.rule || process.markup && process.markup.constructor !== Array )
+		if ( !query.rule || query.value && query.value.constructor !== Array )
 			return null;
 		
 		// Todo: implement display of invalid subtemplate / base template as backup is used
-		let template = HP_Config.regex.extract_area("foreach", process.rule.key).exec(process.template);
-		let indexTemplate = template[1] || process.template;
+		let templatePieces = HP_Config.regex.extract_area( "foreach", query.key ).exec(query.template.value);
+
 		let content = "";
-		let parser = require ("./parser.js").parser;
 		
 		// Todo: implement display of invalid markups
-		process.markup.forEach( (markup, index) => {
+		for (let index in query.value ) {
+
+			if ( !(index in query.value) )
+				continue;
 			
-			content += parser._parseTemplate(indexTemplate, markup) || "";
-		});
+			let markup = query.value[index];
+
+			// add index / humanized and raw
+			markup.hp_index = parseInt(index) + 1;
+			markup.hp_index_raw = index;
+
+			content += HP_Parser.parser._parse( new HP_Classes.template(templatePieces[1]), markup );
+		};
 		
-		let response = new HP_ProcessResponse( template[0], content );
+		let response = new HP_Classes.processResponse( templatePieces[0], content );
 		
 		return response;
 	}
@@ -126,7 +133,7 @@ exports.ruleProcessing = new class RuleProcessingClass {
 		else
 			content = process.markup;
 
-		let response = new HP_ProcessResponse( process.rule.rule, content );
+		let response = new HP_Classes.processResponse( process.rule.rule, content );
 
 		return response;
 	}
