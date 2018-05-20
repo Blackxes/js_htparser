@@ -19,14 +19,14 @@ exports.config = {};
 exports.regex = {}
 
 // matches a rule within a template
-exports.regex.extract_rule = HP_REGEX_EXTRACT_RULE = function () { return new RegExp("{{([^<>{}]*)}}", "g"); }
+exports.regex.extract_rule = function () { return new RegExp("{{([^<>{}]*)}}", "g"); }
 
 // filters a rule into the specific parts
 // const HP_REGEX_FILTER_RULE = function() { return new RegExp(`{{\\s*(\\w+)\\s*(\\w*)[:]\\s*([\\w+\\.]*)\\s*|{{\\s*(\\w+)\\s*}}`, "g"); }
-exports.regex.filter_rule = HP_REGEX_FILTER_RULE = function() { return new RegExp("{{\\s*(\\w+)\\s*(\\w*)[:]\\s*(\\w*)\\s*}}|{{\\s*(\\w+)\\s*}}", "g"); }
+exports.regex.filter_rule = function() { return new RegExp("{{\\s*(\\w+)\\s*(\\w*)[:]\\s*(\\w*)\\s*}}|{{\\s*(\\w+)\\s*}}", "g"); }
 
 // matches a complete substring from the template including content (can be accessed via group)
-exports.regex.extract_area = HP_REGEX_EXTRACT_AREA = function(request, value) { return new RegExp(`{{\\s*${request}\\s+start\\s*:\\s*${value}\\s*}}(.*){{\\s*${request}\\s+end\\s*:\\s*${value}\\s*}}`, "g"); }
+exports.regex.extract_area = function(request, value) { return new RegExp(`{{\\s*${request}\\s+start\\s*:\\s*${value}\\s*}}(.*){{\\s*${request}\\s+end\\s*:\\s*${value}\\s*}}`, "g"); }
 
 //_____________________________________________________________________________________________
 // rule parsing configuration

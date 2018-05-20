@@ -3,10 +3,14 @@
   "version": "1.0.3",
   "main": "index.js",
   "scripts": {
-    "build": "browserify sandbox/sandbox.js -o sandbox/package.js",
-    "watch": "watchify sandbox/sandbox.js -o sandbox/package.js",
-    "babel": "babel sandbox/sandbox.js -o index.js",
-    "uglify": "uglifyjs index.js -o index.js"
+    "build": "browserify sandbox/index.js -o index.js",
+    "watch": "watchify sandbox/index.js -o index.js",
+    "babel": "babel index.js -o index.js",
+    "uglify": "uglifyjs index.js -o index.js",
+
+    "build_test": "browserify sandbox/sandbox.js -o sandbox/package.js",
+    "watch_test": "watchify sandbox/sandbox.js -o sandbox/package.js",
+    "babel_test": "babel sandbox/sandbox.js -o sandbox/package.js"
   },
   "author": "Alexander Bassov",
   "license": "ISC",
