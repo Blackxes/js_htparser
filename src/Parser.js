@@ -11,9 +11,9 @@
 
 var exports = module.exports = {};
 
-var HP_Config = require ("./Config.js");
-var HP_RuleProcessor = require ("./RuleProcessor.js");
-var HP_Classes = require ("./Classes.js");
+var HP_Config = require ("./config.js");
+var HP_RuleProcessor = require ("./ruleProcessor.js");
+var HP_Classes = require ("./classes.js");
 
 //_____________________________________________________________________________________________
 exports.parser = new class HTMLParserClass {

@@ -12,7 +12,7 @@
 var exports = module.exports = {};
 
 // includes
-var HP_Parser = require ("./Parser.js");
+var HP_Parser = require ("./parser.js");
 
 //_____________________________________________________________________________________________
 // contains information about a template
