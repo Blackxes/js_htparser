@@ -9,11 +9,10 @@
 
 /*********************************************************************************************/
 
-var exports = module.exports = {}
-
-var HP_Config = require ("./config.js");
-var HP_Parser = require ("./parser.js");
-var HP_Classes = require ("./classes.js");
+// includes
+var HP_Config = require("./config.js");
+var HP_Parser = require("./parser.js");
+var HP_Classes = require("./classes.js");
 
 //_____________________________________________________________________________________________
 exports.ruleProcessor = new class RuleProcessorClass {

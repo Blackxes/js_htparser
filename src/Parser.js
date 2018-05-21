@@ -10,12 +10,12 @@
 /*********************************************************************************************/
 
 // includes
-var HP_Config = require ("./config.js");
-var HP_RuleProcessor = require ("./ruleProcessor.js");
-var HP_Classes = require ("./classes.js");
+var HP_Config = require("./config.js");
+var HP_RuleProcessor = require("./ruleProcessor.js");
+var HP_Classes = require("./classes.js");
 
 //_____________________________________________________________________________________________
-module.exports = new class HTMLParserClass {
+exports = new class HTMLParserClass {
 
 	//_________________________________________________________________________________________
 	constructor() {

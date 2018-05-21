@@ -3,12 +3,13 @@
   "version": "1.0.7",
   "main": "index.js",
   "scripts": {
-    "build": "browserify src/package.js -o src/index.js",
-    "babel": "babel src/index.js -o src/index.js",
-    "uglify": "uglifyjs src/index.js -o src/index.js",
-    "live": "npm run build && npm run babel && npm run uglify",
-    "build_test": "browserify sandbox.js -o test.js",
-    "watch_test": "watchify sandbox.js -o test.js"
+    "dist_build": "browserify src/index.js -o dist/index.js",
+    "dist_babel": "babel dist/index.js -o dist/index.js",
+    "dist_uglify": "uglifyjs dist/index.js -o dist/min.index.js",
+    "dist": "npm run dist_build && npm run dist_babel && npm run dist_uglify",
+
+    "build_sandbox": "browserify sandbox.js -o test.js",
+    "watch": "watchify sandbox.js -o test.js"
   },
   "author": "Alexander Bassov",
   "license": "ISC",

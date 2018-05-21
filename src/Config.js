@@ -9,8 +9,6 @@
 //
 //*********************************************************************************************
 
-var exports = module.exports = {};
-
 // general configuration
 exports.config = {};
 
