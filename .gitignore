@@ -1,2 +1,6 @@
 node_modules/
-.npmignore
+.babelrc
+sandbox.html
+sandbox.js
+test.js
+trash.txt

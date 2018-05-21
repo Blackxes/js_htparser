@@ -11,7 +11,7 @@
 
 var exports = module.exports = {}
 
-var HP_Config = require ("./config.js");
+var HP_Config = require ("./Config.js");
 var HP_Parser = require ("./Parser.js");
 var HP_Classes = require ("./Classes.js");
 
