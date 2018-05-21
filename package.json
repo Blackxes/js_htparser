@@ -24,11 +24,11 @@
   "dependencies": {},
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Blackxes/html_template_parser_v2.git"
+    "url": "https://github.com/Blackxes/js_htparser.git"
   },
   "bugs": {
     "url": "https://github.com/Blackxes/html_template_parser_v2/issues"
   },
-  "homepage": "https://github.com/Blackxes/html_template_parser_v2#readme",
-  "description": ""
+  "homepage": "https://github.com/Blackxes/js_htparser#readme",
+  "description": "javascript html template parser"
 }
