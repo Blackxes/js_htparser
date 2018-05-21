@@ -15,7 +15,7 @@ var HP_RuleProcessor = require("./ruleProcessor.js");
 var HP_Classes = require("./classes.js");
 
 //_____________________________________________________________________________________________
-exports = new class HTMLParserClass {
+exports.parser = new class HTMLParserClass {
 
 	//_________________________________________________________________________________________
 	constructor() {

@@ -7,8 +7,10 @@
     "dist_babel": "babel dist/index.js -o dist/index.js",
     "dist_uglify": "uglifyjs dist/index.js -o dist/min.index.js",
     "dist": "npm run dist_build && npm run dist_babel && npm run dist_uglify",
-    "build_sandbox": "browserify sandbox.js -o test.js",
-    "watch": "watchify sandbox.js -o test.js"
+    "sandbox_build": "browserify test/index.js -o test/package.js",
+    "sandbox_babel": "babel test/package.js -o test/package.js",
+    "sandbox": "npm run sandbox_build && npm run sandbox_babel",
+    "watch": "watchify test/index.js -o test/package.js"
   },
   "author": "Alexander Bassov",
   "license": "ISC",

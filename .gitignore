@@ -1,6 +1,4 @@
 node_modules/
+test/
 .babelrc
-sandbox.html
-sandbox.js
-test.js
-trash.txt
+planning.txt

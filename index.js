@@ -1,1 +1,1 @@
-exports = require("./src/index.js").parser;
+module.exports = require("./src/index.js").parser;

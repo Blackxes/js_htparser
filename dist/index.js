@@ -19,28 +19,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 		}return o;
 	}return r;
 })()({ 1: [function (require, module, exports) {
-		//_____________________________________________________________________________________________
-		/**********************************************************************************************
-  
-  	contains several container classes
-  
-  	@Author: Alexander Bassov
-  	@Email: blackxes@gmx.de
-  	@Github: https://www.github.com/Blackxes
-  
-  /*********************************************************************************************/
-
-		// includes
 		var HP_Parser = require("./parser.js");
 
-		//_____________________________________________________________________________________________
-		// contains information about a template
 		exports.template = function () {
-
-			//_________________________________________________________________________________________
-			// param1 (string) expects either the template or template id
-			// 		when the template id is given the template assigns it automatically when requesting
-			//		when template is given no id is needed / the raw template has a higher priority
 			function templateClass(value) {
 				_classCallCheck(this, templateClass);
 
@@ -55,25 +36,14 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 				}
 			}
 
-			//_________________________________________________________________________________________
-
-
 			_createClass(templateClass, [{
 				key: "value",
 				set: function set(template) {
 
 					this._value = template || "";
-				}
-
-				//_________________________________________________________________________________________
-				,
+				},
 				get: function get() {
-
-					// when template given
-					if (this._value) return this._value;
-
-					// try to get template by template id / assign as well
-					else if (!this._value && this.id && HP_Parser.parser.hasTemplate(this.id)) {
+					if (this._value) return this._value;else if (!this._value && this.id && HP_Parser.parser.hasTemplate(this.id)) {
 							this._value = HP_Parser.parser.getTemplate(this.id);
 							return this._value;
 						}
@@ -85,12 +55,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 			return templateClass;
 		}();
 
-		//_____________________________________________________________________________________________
-		// contains information about the current processing template and its request
-		exports.query =
-
-		//_________________________________________________________________________________________
-		function QueryClass(rule, request, operator, key, template, markup, value) {
+		exports.query = function QueryClass(rule, request, operator, key, template, markup, value) {
 			_classCallCheck(this, QueryClass);
 
 			this.rule = rule || null;
@@ -100,112 +65,42 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 			this.template = template || null;
 			this.markup = markup || null;
 			this.value = value || null;
-		}
+		};
 
-		//_________________________________________________________________________________________
-		//
-
-		;
-
-		//_____________________________________________________________________________________________
-		// contains the final information about the string
-		// thats being replaced with the assossiated value
-		//
-		exports.processResponse =
-
-		//_________________________________________________________________________________________
-		function ProcessResponseClass(replacement, value) {
+		exports.processResponse = function ProcessResponseClass(replacement, value) {
 			_classCallCheck(this, ProcessResponseClass);
 
 			this.replacement = replacement || "";
 			this.value = value || "";
-		}
-
-		//_________________________________________________________________________________________
-		//
-		;
-
-		//_____________________________________________________________________________________________
-		//
+		};
 	}, { "./parser.js": 4 }], 2: [function (require, module, exports) {
-		//_____________________________________________________________________________________________
-		//*********************************************************************************************
-		//
-		//	defaults and configuration
-		//
-		//	Author: Alexander Bassov
-		//	Email: blackxes@gmx.de
-		//	Github: https://github.com/Blackxes
-		//
-		//*********************************************************************************************
-
-		// general configuration
 		exports.config = {};
 
-		//_____________________________________________________________________________________________
-		// regex for extracting and filtering
 		exports.regex = {};
 
-		// matches a rule within a template
 		exports.regex.extract_rule = function () {
 			return new RegExp("{{([^<>{}]*)}}", "g");
 		};
 
-		// filters a rule into the specific parts
-		// const HP_REGEX_FILTER_RULE = function() { return new RegExp(`{{\\s*(\\w+)\\s*(\\w*)[:]\\s*([\\w+\\.]*)\\s*|{{\\s*(\\w+)\\s*}}`, "g"); }
 		exports.regex.filter_rule = function () {
 			return new RegExp("{{\\s*(\\w+)\\s*(\\w*)[:]\\s*(\\w*)\\s*}}|{{\\s*(\\w+)\\s*}}", "g");
 		};
 
-		// matches a complete substring from the template including content (can be accessed via group)
 		exports.regex.extract_area = function (request, value) {
 			return new RegExp("{{\\s*" + request + "\\s+start\\s*:\\s*" + value + "\\s*}}(.*){{\\s*" + request + "\\s+end\\s*:\\s*" + value + "\\s*}}", "g");
 		};
 
-		//_____________________________________________________________________________________________
-		// rule parsing configuration
 		exports.config.ruleParsing = {};
-
-		//_____________________________________________________________________________________________
-		// debugging stuff when working with the library
-		// Todo: implement debuggin usage
-		// exports.config.debug = {};
-
-		// displays every invalid value within the template
-		// exports.config.debug.displayInvalidValues = true;
-		// exports.config.debug.displayInvalidValuesAttributes = {
-		// 	"request": true,
-		// 	"operator": true,
-		// 	"key": true,
-		// 	"template": true,
-		// 	"value": true
-		// };
-
-		//_____________________________________________________________________________________________
-		//
 	}, {}], 3: [function (require, module, exports) {
-		exports = require("./parser.js");
-	}, { "./parser.js": 4 }], 4: [function (require, module, exports) {
-		//_____________________________________________________________________________________________
-		/**********************************************************************************************
-  
-  	html template parsing class
-  
-  	@Author: Alexander Bassov
-  	@Email: blackxes@gmx.de
-  	@Github: https://www.github.com/Blackxes
-  
-  /*********************************************************************************************/
+		exports.parser = require("./parser.js").parser;
 
-		// includes
+		if (window) window.JsHTParser = require("./parser.js").parser;
+	}, { "./parser.js": 4 }], 4: [function (require, module, exports) {
 		var HP_Config = require("./config.js");
 		var HP_RuleProcessor = require("./ruleProcessor.js");
 		var HP_Classes = require("./classes.js");
 
-		//_____________________________________________________________________________________________
-		exports = new (function () {
-
-			//_________________________________________________________________________________________
+		exports.parser = new (function () {
 			function HTMLParserClass() {
 				_classCallCheck(this, HTMLParserClass);
 
@@ -214,12 +109,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 				this.Init();
 			}
-
-			//_________________________________________________________________________________________
-			// loads templates from the dom / must be accessable with this selector
-			// template#templates
-			//
-
 
 			_createClass(HTMLParserClass, [{
 				key: "Init",
@@ -243,10 +132,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 						this.templates[templateid] = el.innerHTML.replace(/\s{2,}/g, "");
 					}
 				}
-
-				//_________________________________________________________________________________________
-				// user entrance function to handle the params correctly
-
 			}, {
 				key: "parse",
 				value: function parse(_template, markup) {
@@ -257,48 +142,32 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 					return this._parse(template, markup);
 				}
-
-				//_________________________________________________________________________________________
-				// actual template parsing
-
 			}, {
 				key: "_parse",
 				value: function _parse(template, markup) {
 
 					var content = template.value;
 
-					// extract and parse marker within template
 					var match = null;
 					var regexExtractRule = HP_Config.regex.extract_rule();
 
 					while (match = regexExtractRule.exec(content)) {
-
-						// Match: 0.match/rule | 1.request | 2.operator | 3.key | 4.marker
-						//
 						var pieces = HP_Config.regex.filter_rule().exec(match[0]) || {};
 
 						var query = new HP_Classes.query(pieces[0] || match[0], pieces[4] || pieces[1], pieces[2] || null, pieces[3], template, markup);
 
-						// add additional marker
 						query.markup = this._prepareMarkup(query);
 						query.value = query.markup[query.key || query.request];
 
 						var response = HP_RuleProcessor.ruleProcessor.parse(query);
 
-						// Todo: implement display of empty values / specifically undefined and null (not empty strings!)
 						content = content.replace(response.replacement, response.value);
 
-						// adjust regex last index because the content changed
-						// to ensure the search get all rules this is needed
 						regexExtractRule.lastIndex -= response.replacement.length - response.value.length || 0;
 					}
 
 					return content;
 				}
-
-				//_________________________________________________________________________________________
-				// adds additional marker to the markup
-
 			}, {
 				key: "_prepareMarkup",
 				value: function _prepareMarkup(query) {
@@ -307,10 +176,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 					prepMarkup.hp_templateId = query.template.id;
 
-					// kinda senseless / cause these values are defined when using them
-					// {{ hp_rule }} result in {{ hp_rule }}
-					// {{ hp_key }} result in nothing
-					// {{ hp_request }} result for some reason in "request"
 					prepMarkup.hp_rule = query.rule;
 					prepMarkup.hp_key = query.key;
 					prepMarkup.hp_request = query.request;
@@ -319,10 +184,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 					return prepMarkup;
 				}
-
-				//_________________________________________________________________________________________
-				// returns a template
-
 			}, {
 				key: "getTemplate",
 				value: function getTemplate(templateId) {
@@ -331,10 +192,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 					return this.templates[templateId];
 				}
-
-				//_________________________________________________________________________________________
-				// extracts a substring from a string
-
 			}, {
 				key: "getSubTemplate",
 				value: function getSubTemplate(_template, request, key) {
@@ -347,80 +204,31 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 					return subtemplate;
 				}
-
-				//_________________________________________________________________________________________
-				// returns the existance of a template
-
 			}, {
 				key: "hasTemplate",
 				value: function hasTemplate(templateId) {
 					return this.templates.hasOwnProperty(templateId);
 				}
-
-				//_________________________________________________________________________________________
-				// 
-
 			}]);
 
 			return HTMLParserClass;
 		}())();
-
-		//_____________________________________________________________________________________________
-		//
 	}, { "./classes.js": 1, "./config.js": 2, "./ruleProcessor.js": 5 }], 5: [function (require, module, exports) {
-		//_____________________________________________________________________________________________
-		/**********************************************************************************************
-  
-  	contains processing functions of the template library
-  
-  	@Author: Alexander Bassov
-  	@Email: blackxes@gmx.de
-  	@Github: https://www.github.com/Blackxes
-  
-  /*********************************************************************************************/
-
-		// includes
 		var HP_Config = require("./config.js");
 		var HP_Parser = require("./parser.js");
 		var HP_Classes = require("./classes.js");
 
-		//_____________________________________________________________________________________________
 		exports.ruleProcessor = new (function () {
-
-			//_________________________________________________________________________________________
 			function RuleProcessorClass() {
 				_classCallCheck(this, RuleProcessorClass);
 			}
 
-			//_________________________________________________________________________________________
-			// parses the given rule
-
-
 			_createClass(RuleProcessorClass, [{
 				key: "parse",
 				value: function parse(query) {
-
-					// initial definition
 					var response = new HP_Classes.processResponse(query.rule, query.value);
 
-					// on empty request / due to the way the parsing works
-					// this automatically being replaced with empty content
-					if (!query.request) {}
-					// console.log("Missing Request: %o", query.rule);
-					// Todo: implement display of empty requests
-
-
-					// on a simple marker
-					else if (!query.key) {}
-						// if ( query.value === undefined )
-						// console.log("Missing Key: %s", query.request);
-						// Todo: implement display of invalid values (when marker is missing value)
-
-
-						// on command request / with(out) operator
-						else if (query.request) {
-
-								// single commands
+					if (!query.request) {} else if (!query.key) {} else if (query.request) {
 								var func = "" + query.request + (query.operator ? "_" + query.operator : "");
 
 								if (func in this) {
@@ -431,45 +239,31 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 					return response;
 				}
-
-				//_________________________________________________________________________________________
-				// replaces current scope with the result of another template
-
 			}, {
 				key: "template",
 				value: function template(query) {
 
 					var content = "";
 
-					// Todo: implement display of invalid values
 					var response = new HP_Classes.processResponse(query.rule, HP_Parser.parser.parse(query.key, query.markup[query.key]));
 
 					return response;
 				}
-
-				//_________________________________________________________________________________________
-				// repeats inner content until condition is false
-
 			}, {
 				key: "foreach_start",
 				value: function foreach_start(query) {
-
-					// Todo: implement display of invalid values
 					if (!query.rule || query.value && query.value.constructor !== Array) return null;
 
-					// Todo: implement display of invalid subtemplate / base template as backup is used
 					var templatePieces = HP_Config.regex.extract_area("foreach", query.key).exec(query.template.value);
 
 					var content = "";
 
-					// Todo: implement display of invalid markups
 					for (var index in query.value) {
 
 						if (!(index in query.value)) continue;
 
 						var markup = query.value[index];
 
-						// add index / humanized and raw
 						markup.hp_index = parseInt(index) + 1;
 						markup.hp_index_raw = index;
 
@@ -480,10 +274,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 					return response;
 				}
-
-				//_________________________________________________________________________________________
-				// displays the current process markup
-
 			}, {
 				key: "debug",
 				value: function debug(process) {
@@ -492,34 +282,20 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 					var content = "";
 					var markup = {};
 
-					// when undefined value given
-					if (process.markup === null) content = "Undefined";
-
-					// when array or object
-					else if (process.markup.constructor === Array || process.markup.constructor === Object) {
+					if (process.markup === null) content = "Undefined";else if (process.markup.constructor === Array || process.markup.constructor === Object) {
 							for (var i in process.markup) {
 								var item = process.markup[i];
 
 								content += item + "<br>";
 							}
-						}
-
-						// when a simple value
-						else content = process.markup;
+						} else content = process.markup;
 
 					var response = new HP_Classes.processResponse(process.rule.rule, content);
 
 					return response;
 				}
-
-				//_________________________________________________________________________________________
-				//
-
 			}]);
 
 			return RuleProcessorClass;
 		}())();
-
-		//_____________________________________________________________________________________________
-		//
 	}, { "./classes.js": 1, "./config.js": 2, "./parser.js": 4 }] }, {}, [3]);
