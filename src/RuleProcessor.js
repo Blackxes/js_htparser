@@ -37,7 +37,7 @@ exports.ruleProcessor = new class RuleProcessorClass {
 		
 		// on a simple marker
 		else if ( !query.key ) {
-			if ( query.value === undefined )
+			// if ( query.value === undefined )
 				// console.log("Missing Key: %s", query.request);
 			// Todo: implement display of invalid values (when marker is missing value)
 		}
