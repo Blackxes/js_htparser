@@ -31,14 +31,14 @@ exports.ruleProcessor = new class RuleProcessorClass {
 		// on empty request / due to the way the parsing works
 		// this automatically being replaced with empty content
 		if ( !query.request ) {
-			console.log("Missing Request: %o", query.rule);
+			// console.log("Missing Request: %o", query.rule);
 			// Todo: implement display of empty requests
 		}
 		
 		// on a simple marker
 		else if ( !query.key ) {
 			if ( query.value === undefined )
-				console.log("Missing Key: %s", query.request);
+				// console.log("Missing Key: %s", query.request);
 			// Todo: implement display of invalid values (when marker is missing value)
 		}
 		
