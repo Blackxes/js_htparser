@@ -1,12 +1,11 @@
 {
   "name": "js_htparser",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "main": "index.js",
   "scripts": {
     "build": "browserify sandbox.js -o index.js",
     "babel": "babel index.js -o index.js",
     "live": "npm run build | npm run babel",
-    
     "build_test": "browserify sandbox.js -o test.js",
     "watch_test": "watchify sandbox.js -o test.js"
   },
