@@ -1,6 +1,6 @@
 {
   "name": "js_htparser",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "main": "index.js",
   "scripts": {
     "build": "browserify src/package.js -o src/index.js",
