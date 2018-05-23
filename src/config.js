@@ -24,7 +24,16 @@ exports.regex.extract_rule = function () { return new RegExp("{{([^<>{}]*)}}", "
 exports.regex.filter_rule = function() { return new RegExp("{{\\s*(\\w+)\\s*(\\w*)[:]\\s*(\\w*)\\s*}}|{{\\s*(\\w+)\\s*}}", "g"); }
 
 // matches a complete substring from the template including content (can be accessed via group)
-exports.regex.extract_area = function(request, value) { return new RegExp(`{{\\s*${request}\\s+start\\s*:\\s*${value}\\s*}}(.*){{\\s*${request}\\s+end\\s*:\\s*${value}\\s*}}`, "g"); }
+//
+// param1 (string) expects the request key
+// param2 (string) expects the value of the area / like the key
+// param3 (object) expects the range for the area
+//		begin -> determines the start of the string
+// 		end -> determines the end of the string
+//
+exports.regex.extract_area = function(request, value, range = { "begin": "start", "end": "end" }) {
+	return new RegExp(`{{\\s*${request}\\s+${range.begin}\\s*:\\s*${value}\\s*}}(.*){{\\s*${request}\\s+${range.end}\\s*:\\s*${value}\\s*}}`, "g");
+}
 
 //_____________________________________________________________________________________________
 // rule parsing configuration
