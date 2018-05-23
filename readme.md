@@ -78,7 +78,7 @@ value and parses every single item.
 
 ```html
 <!-- template -->
-<template template-id="fruit_template">
+<template template-id="fruit-template">
 	{{ foreach start: fruits }}
 		<p>{{ fruit }}</p>
 	{{ foreach end: fruits }}
@@ -86,17 +86,19 @@ value and parses every single item.
 ```
 
 ```javascript
+// the parser
+var parser = require( "js_htparser" ).parser;
+
 // markup
-var markup = {
-	"fruits": [
+var markup = fruits: [
 		{ "fruit": "apple" },
 		{ "fruit": "orange" },
 		{ "fruit": "banana" }
 	]
 }
 
-var parser = require ("./parser").parser;
-var content = parser.parse( "fruit_template", markup );
+// parse content into "content"
+var content = parser.parse( "fruit-template", markup );
 ```
 
 ```html
@@ -104,4 +106,77 @@ var content = parser.parse( "fruit_template", markup );
 <p>apple</p>
 <p>orange</p>
 <p>banana</p>
+```
+
+## [ template ]
+serves as either a placeholder for later defined templates or a template itself.
+By defining the template command as a single line command will result in being interpreted
+as a template placeholder:
+
+```html
+<!-- main template -->
+<template template-id="cuptypes">
+	<ul>
+	{{ foreach start: cups }}
+		<p>{{ cup }}</p>
+	{{ foreach end: cups }}
+	</ul>
+</temlate>
+
+<!-- subtemplate -->
+<template template-id="template-placeholder">
+	{{ template: cuptypes }}
+</template>
+```
+
+```javascript
+// parser
+var parser = require( "js_htparser" ).parser;
+
+// markup
+var markup = {
+	"cuptypes": {
+		"cups": [
+		    { "cup": "glass" },
+		    { "cup": "goblet" },
+		    { "cup": "mug" }
+		]
+	}
+}
+
+// parse content direct into a container
+document.getElementById("app").innerHTML = parser.parse( "template-placeholder", markup );
+```
+
+By defining the request as a area command result in being interpreted as
+a template itself:
+
+```html
+<template template-id="vegetables">
+	{{ template start: feelings_on_vegetables }}
+		<p>Olaf appreciates: {{ olaf_veg }}</p>
+		<p>Peter disgraces: {{ peter_veg }}</p>
+		<p>George exterminates: {{ george_veg }}</p>
+	{{ template end: feelings_on_vegetables }}
+</template>
+```
+
+```javascript
+// parser
+var parser = require( "js_htparser" );
+
+// george specific function
+var george_veg = () => { return "ogonori"; }
+
+// markup
+var markup = {
+	"feelings_on_vegetables": {
+		"olaf_veg": "kurrat",
+		"peter_veg": "canna",
+		"george_veg": george_veg()
+	}
+}
+
+// store parsed content
+var content = parser.parse( "feelings_on_vegetables", markup );
 ```
