@@ -10,9 +10,9 @@
 /*********************************************************************************************/
 
 // includes
-var HP_Config = require("./config.js");
-var HP_Parser = require("./parser.js");
-var HP_Classes = require("./classes.js");
+var Config = require("./config.js");
+var Parser = require("./parser.js");
+var Classes = require("./classes.js");
 
 //_____________________________________________________________________________________________
 exports.ruleProcessor = new class RuleProcessorClass {
@@ -23,9 +23,9 @@ exports.ruleProcessor = new class RuleProcessorClass {
 	//_________________________________________________________________________________________
 	// parses the given rule
 	parse( query ) {
-
-		// initial definition
-		let response = new HP_Classes.processResponse( query.rule, query.value );
+		
+		// initial definition		
+		let response = new Classes.processResponse( query.rule, query.value || query.markup[query.key] );
 
 		// on empty request / due to the way the parsing works
 		// this automatically being replaced with empty content
@@ -37,7 +37,7 @@ exports.ruleProcessor = new class RuleProcessorClass {
 		// on a simple marker
 		else if ( !query.key ) {
 			// if ( query.value === undefined )
-				// console.log("Missing Key: %s", query.request);
+				// console.log("Missing Key: %s", query.request, query);
 			// Todo: implement display of invalid values (when marker is missing value)
 		}
 		
@@ -63,12 +63,37 @@ exports.ruleProcessor = new class RuleProcessorClass {
 	// replaces current scope with the result of another template
 	template( query ) {
 
+		// initial definition
+		let response = new Classes.processResponse( query.rule, query.rule, false );
 		let content = "";
+		
+		// parse on existing template
+		if ( Parser.parser.hasTemplate(query.key) )
+			response.value = Parser.parser.parse( query.template, query.markup );
+		
+		// .. or create post request to parse it later on
+		else {
+			
+			let postQuery = new Classes.postQuery(
+				Parser.parser._prepareQuery( query.rule, new Classes.template(query.key), query.markup[query.key] )
+			);
+			response.postQuery = postQuery;
+		}
 
-		// Todo: implement display of invalid values
-		let response = new HP_Classes.processResponse(
-			query.rule,
-			HP_Parser.parser.parse(query.key, query.markup[query.key])
+		return response;
+	}
+
+	//_________________________________________________________________________________________
+	// extracts a string from a template to be a template on its on
+	template_start( query ) {
+
+		// add template
+		let templatePieces = Config.regex.extract_area("template", query.key).exec( query.template.value );
+		Parser.parser.addTemplate( query.key, templatePieces[1] );
+		
+		let response = new Classes.processResponse(
+			templatePieces[0],
+			Parser.parser.parse( query.key, query.markup[query.key] )
 		);
 
 		return response;
@@ -83,7 +108,7 @@ exports.ruleProcessor = new class RuleProcessorClass {
 			return null;
 		
 		// Todo: implement display of invalid subtemplate / base template as backup is used
-		let templatePieces = HP_Config.regex.extract_area( "foreach", query.key ).exec(query.template.value);
+		let templatePieces = Config.regex.extract_area( "foreach", query.key ).exec(query.template.value);
 
 		let content = "";
 		
@@ -99,10 +124,10 @@ exports.ruleProcessor = new class RuleProcessorClass {
 			markup.hp_index = parseInt(index) + 1;
 			markup.hp_index_raw = index;
 
-			content += HP_Parser.parser._parse( new HP_Classes.template(templatePieces[1]), markup );
+			content += Parser.parser._parse( new Classes.template(templatePieces[1]), markup );
 		};
 		
-		let response = new HP_Classes.processResponse( templatePieces[0], content );
+		let response = new Classes.processResponse( templatePieces[0], content );
 		
 		return response;
 	}
@@ -132,9 +157,21 @@ exports.ruleProcessor = new class RuleProcessorClass {
 		else
 			content = process.markup;
 
-		let response = new HP_Classes.processResponse( process.rule.rule, content );
+		let response = new Classes.processResponse( process.rule.rule, content );
 
 		return response;
+	}
+
+	//_________________________________________________________________________________________
+	// builds single line requests
+	_buildSingleRequest(request, key, operator = null) {
+		return `{{ ${request} ${(operator) ? operator : ""}: ${key} }}`;
+	}
+
+	//_________________________________________________________________________________________
+	// builds area requests
+	_buildAreaRequest(request, range, key, content) {
+		return `{{ ${request} ${range.begin}: ${key} }}${content}{{ ${request} ${range.end}: ${key} }}`;
 	}
 	
 	//_________________________________________________________________________________________
