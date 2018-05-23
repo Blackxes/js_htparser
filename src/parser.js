@@ -21,17 +21,14 @@ exports.parser = new class HTMLParserClass {
 	constructor() {
 
 		this.templates = {};
-		this.processingMarkup;
 
-		this.Init();
+		this._loadTemplates();
 	}
 
 	//_________________________________________________________________________________________
-	// loads templates from the dom / must be accessable with this selector
-	// template#templates
-	//
-	Init() {
-		
+	// loads templates from the dom
+	_loadTemplates() {
+
 		let raw = document.querySelector("template#templates");
 
 		if (!raw)
@@ -45,13 +42,28 @@ exports.parser = new class HTMLParserClass {
 				continue;
 			
 			let el = children[index];
-			let templateid = el.getAttribute("template-id");
+			let templateId = el.getAttribute("template-id");
 
-			if (!templateid)
-				continue;
-			
-			this.templates[templateid] = el.innerHTML.replace(/\s{2,}/g, "");
+			this.addTemplate( templateId, el.innerHTML );
 		}
+
+		return true;
+	}
+
+	//_________________________________________________________________________________________
+	// adds another templates
+	addTemplate( id, template ) {
+
+		if (!id || id && id.constructor !== String ||
+			!template || template.constructor !== String ||
+			this.hasTemplate(id) )
+		{
+			return false;
+		}
+		
+		this.templates[id] = template.replace(/\s{2,}/g, "");
+		
+		return true;
 	}
 
 	//_________________________________________________________________________________________
@@ -69,43 +81,70 @@ exports.parser = new class HTMLParserClass {
 	//_________________________________________________________________________________________
 	// actual template parsing
 	_parse( template, markup ) {
-		
+
 		let content = template.value;
 		
 		// extract and parse marker within template
 		let match = null;
 		let regexExtractRule = HP_Config.regex.extract_rule();
+		let postQueries = [];
 		
 		while ( match = regexExtractRule.exec(content) ) {
-			
-			// Match: 0.match/rule | 1.request | 2.operator | 3.key | 4.marker
-			//
-			let pieces = HP_Config.regex.filter_rule().exec(match[0]) || {};
 
-			let query = new HP_Classes.query(
-				pieces[0] || match[0],
-				pieces[4] || pieces[1],
-				pieces[2] || null,
-				pieces[3],
-				template,
-				markup
-			);
+			let query = this._prepareQuery( match[0], template, markup );
 			
-			// add additional marker
-			query.markup = this._prepareMarkup( query );
-			query.value = query.markup[ query.key || query.request ];
-
 			let response = HP_RuleProcessor.ruleProcessor.parse( query );
-
-			// Todo: implement display of empty values / specifically undefined and null (not empty strings!)
+			
 			content = content.replace( response.replacement, response.value );
 
 			// adjust regex last index because the content changed
 			// to ensure the search get all rules this is needed
 			regexExtractRule.lastIndex -= response.replacement.length - response.value.length || 0;
+
+			// post queries needs to be parsed later on because they depend
+			// on other requests to be proceeded before
+			if (response.postQuery)
+				postQueries.push( response.postQuery );
 		}
+
+		// some querries rely on others and need to be executed later on
+		// eg. the template requests a template thats been used and declared
+		// later in the same template / that template is known by the parser later on
+		postQueries.forEach( (postQuery) => {
+
+			// when template is not giving at this time / it cant be parsed
+			if ( !postQuery.template.value )
+				content = content.replace( postQuery.rule, "" );
+			
+			let response = HP_RuleProcessor.ruleProcessor.parse( postQuery );
+			content = content.replace( response.replacement, response.value );
+		})
 		
 		return content;
+	}
+
+	//_________________________________________________________________________________________
+	// splits a rule into its pieces and prepares it for use
+	_prepareQuery( rule, template = null, markup = {}, debug ) {
+		
+		// Match: 0.match/rule | 1.request | 2.operator | 3.key | 4.marker
+		//
+		let pieces = HP_Config.regex.filter_rule().exec(rule) || {};
+
+		let query = new HP_Classes.query(
+			pieces[0] || rule,
+			pieces[4] || pieces[1],
+			pieces[2] || null,
+			pieces[3],
+			template,
+			markup
+		);
+
+		// add additional marker
+		query.markup = this._prepareMarkup( query );
+		query.value = query.markup[ query.key || query.request ];
+
+		return query;
 	}
 	
 	//_________________________________________________________________________________________
