@@ -17,22 +17,34 @@ var HP_Parser = require("./parser.js");
 exports.template = class templateClass {
 
 	//_________________________________________________________________________________________
-	// param1 (string) expects either the template or template id
-	// 		when the template id is given the template assigns it automatically when requesting
-	//		when template is given no id is needed / the raw template has a higher priority
-	constructor( value ) {
+	// param1 (string) expects the value for this template
+	//		either a template instance
+	//		a template id
+	//		or a raw template
+	// param2 (boolean) defines wether the given value is a raw template or an id
+	//		instances are handled independently
+	//
+	constructor( value, isTemplate = false) {
 
 		this._value = "";
 		this.id = "";
 
-		if ( value ) {
-			if ( HP_Parser.parser.hasTemplate( value ) ) {
-				this._value = HP_Parser.parser.getTemplate( value );
-				this.id = value;
-			}
-			else
-				this._value = value;
+		// defined by instance
+		if ( value instanceof exports.template ) {
+			this.id = value.id;
+			this._value = value.value;
 		}
+
+		// when its a template
+		else if ( value && isTemplate )
+			this._value = value
+			
+		// when an id is defined
+		else if ( value && !isTemplate )
+			this.id = value;
+		
+		// sad life.. nothing matches
+		else;
 	}
 
 	//_________________________________________________________________________________________
@@ -44,18 +56,16 @@ exports.template = class templateClass {
 	//_________________________________________________________________________________________
 	get value() {
 
-		// when template given
-		if ( this._value )
-			return this._value;
-
-		// try to get template by template id / assign as well
-		else if ( !this._value && this.id && HP_Parser.parser.hasTemplate( this.id )) {
-			this._value = HP_Parser.parser.getTemplate( this.id );
-			return this._value;
-		}
-			
-		return null;
+		// trying to pull template
+		if ( HP_Parser.parser.hasTemplate( this.id ) )
+			return HP_Parser.parser.getTemplate( this.id );
+		
+		// return pure template or null
+		return this._value || "";
 	}
+
+	//_________________________________________________________________________________________
+	//
 
 }
 
@@ -64,7 +74,7 @@ exports.template = class templateClass {
 exports.query = class QueryClass {
 
 	//_________________________________________________________________________________________
-	constructor(rule, request, operator, key, template, markup, value) {
+	constructor( rule, request, operator, key, template, markup, value ) {
 
 		this.rule = rule || null;
 		this.request = request || null;
@@ -87,14 +97,33 @@ exports.query = class QueryClass {
 exports.processResponse = class ProcessResponseClass {
 
 	//_________________________________________________________________________________________
-	constructor(replacement, value) {
+	constructor( replacement, value, postQuery ) {
 		
 		this.replacement = replacement || "";
 		this.value = value || "";
+		this.postQuery = (postQuery !== undefined) ? postQuery : null;
 	}
 
 	//_________________________________________________________________________________________
 	//
+}
+
+//_____________________________________________________________________________________________
+// post query / when a rule needs to be parsed later on due to dependencies
+exports.postQuery = class PostQueryClass extends exports.query {
+
+	//_________________________________________________________________________________________
+	constructor( query, _template, _markup ) {
+		
+		let template = _template || query.template;
+		let markup = _markup || query.markup;
+
+		super( query.rule, query.request, query.operator, query.key, template, markup, query.value );
+	}
+
+	//_________________________________________________________________________________________
+	//
+
 }
 
 //_____________________________________________________________________________________________
