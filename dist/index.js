@@ -2,6 +2,10 @@
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 (function () {
@@ -23,17 +27,17 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 		exports.template = function () {
 			function templateClass(value) {
+				var isTemplate = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
 				_classCallCheck(this, templateClass);
 
 				this._value = "";
 				this.id = "";
 
-				if (value) {
-					if (HP_Parser.parser.hasTemplate(value)) {
-						this._value = HP_Parser.parser.getTemplate(value);
-						this.id = value;
-					} else this._value = value;
-				}
+				if (value instanceof exports.template) {
+					this.id = value.id;
+					this._value = value.value;
+				} else if (value && isTemplate) this._value = value;else if (value && !isTemplate) this.id = value;else ;
 			}
 
 			_createClass(templateClass, [{
@@ -43,12 +47,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 					this._value = template || "";
 				},
 				get: function get() {
-					if (this._value) return this._value;else if (!this._value && this.id && HP_Parser.parser.hasTemplate(this.id)) {
-							this._value = HP_Parser.parser.getTemplate(this.id);
-							return this._value;
-						}
+					if (HP_Parser.parser.hasTemplate(this.id)) return HP_Parser.parser.getTemplate(this.id);
 
-					return null;
+					return this._value || "";
 				}
 			}]);
 
@@ -67,12 +68,28 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 			this.value = value || null;
 		};
 
-		exports.processResponse = function ProcessResponseClass(replacement, value) {
+		exports.processResponse = function ProcessResponseClass(replacement, value, postQuery) {
 			_classCallCheck(this, ProcessResponseClass);
 
 			this.replacement = replacement || "";
 			this.value = value || "";
+			this.postQuery = postQuery !== undefined ? postQuery : null;
 		};
+
+		exports.postQuery = function (_exports$query) {
+			_inherits(PostQueryClass, _exports$query);
+
+			function PostQueryClass(query, _template, _markup) {
+				_classCallCheck(this, PostQueryClass);
+
+				var template = _template || query.template;
+				var markup = _markup || query.markup;
+
+				return _possibleConstructorReturn(this, (PostQueryClass.__proto__ || Object.getPrototypeOf(PostQueryClass)).call(this, query.rule, query.request, query.operator, query.key, template, markup, query.value));
+			}
+
+			return PostQueryClass;
+		}(exports.query);
 	}, { "./parser.js": 4 }], 2: [function (require, module, exports) {
 		exports.config = {};
 
@@ -87,14 +104,16 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 		};
 
 		exports.regex.extract_area = function (request, value) {
-			return new RegExp("{{\\s*" + request + "\\s+start\\s*:\\s*" + value + "\\s*}}(.*){{\\s*" + request + "\\s+end\\s*:\\s*" + value + "\\s*}}", "g");
+			var range = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : { "begin": "start", "end": "end" };
+
+			return new RegExp("{{\\s*" + request + "\\s+" + range.begin + "\\s*:\\s*" + value + "\\s*}}(.*){{\\s*" + request + "\\s+" + range.end + "\\s*:\\s*" + value + "\\s*}}", "g");
 		};
 
 		exports.config.ruleParsing = {};
 	}, {}], 3: [function (require, module, exports) {
 		exports.parser = require("./parser.js").parser;
 
-		if (window) window.JsHTParser = require("./parser.js").parser;
+		if (window) window.jsHTParser = require("./parser.js").parser;
 	}, { "./parser.js": 4 }], 4: [function (require, module, exports) {
 		var HP_Config = require("./config.js");
 		var HP_RuleProcessor = require("./ruleProcessor.js");
@@ -105,14 +124,13 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 				_classCallCheck(this, HTMLParserClass);
 
 				this.templates = {};
-				this.processingMarkup;
 
-				this.Init();
+				this._loadTemplates();
 			}
 
 			_createClass(HTMLParserClass, [{
-				key: "Init",
-				value: function Init() {
+				key: "_loadTemplates",
+				value: function _loadTemplates() {
 
 					var raw = document.querySelector("template#templates");
 
@@ -125,12 +143,24 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 						if (!children.hasOwnProperty(index)) continue;
 
 						var el = children[index];
-						var templateid = el.getAttribute("template-id");
+						var templateId = el.getAttribute("template-id");
 
-						if (!templateid) continue;
-
-						this.templates[templateid] = el.innerHTML.replace(/\s{2,}/g, "");
+						this.addTemplate(templateId, el.innerHTML);
 					}
+
+					return true;
+				}
+			}, {
+				key: "addTemplate",
+				value: function addTemplate(id, template) {
+
+					if (!id || id && id.constructor !== String || !template || template.constructor !== String || this.hasTemplate(id)) {
+						return false;
+					}
+
+					this.templates[id] = template.replace(/\s{2,}/g, "");
+
+					return true;
 				}
 			}, {
 				key: "parse",
@@ -150,23 +180,45 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 					var match = null;
 					var regexExtractRule = HP_Config.regex.extract_rule();
+					var postQueries = [];
 
 					while (match = regexExtractRule.exec(content)) {
-						var pieces = HP_Config.regex.filter_rule().exec(match[0]) || {};
 
-						var query = new HP_Classes.query(pieces[0] || match[0], pieces[4] || pieces[1], pieces[2] || null, pieces[3], template, markup);
-
-						query.markup = this._prepareMarkup(query);
-						query.value = query.markup[query.key || query.request];
+						var query = this._prepareQuery(match[0], template, markup);
 
 						var response = HP_RuleProcessor.ruleProcessor.parse(query);
 
 						content = content.replace(response.replacement, response.value);
 
 						regexExtractRule.lastIndex -= response.replacement.length - response.value.length || 0;
+
+						if (response.postQuery) postQueries.push(response.postQuery);
 					}
 
+					postQueries.forEach(function (postQuery) {
+						if (!postQuery.template.value) content = content.replace(postQuery.rule, "");
+
+						var response = HP_RuleProcessor.ruleProcessor.parse(postQuery);
+						content = content.replace(response.replacement, response.value);
+					});
+
 					return content;
+				}
+			}, {
+				key: "_prepareQuery",
+				value: function _prepareQuery(rule) {
+					var template = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+					var markup = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+					var debug = arguments[3];
+
+					var pieces = HP_Config.regex.filter_rule().exec(rule) || {};
+
+					var query = new HP_Classes.query(pieces[0] || rule, pieces[4] || pieces[1], pieces[2] || null, pieces[3], template, markup);
+
+					query.markup = this._prepareMarkup(query);
+					query.value = query.markup[query.key || query.request];
+
+					return query;
 				}
 			}, {
 				key: "_prepareMarkup",
@@ -214,9 +266,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 			return HTMLParserClass;
 		}())();
 	}, { "./classes.js": 1, "./config.js": 2, "./ruleProcessor.js": 5 }], 5: [function (require, module, exports) {
-		var HP_Config = require("./config.js");
-		var HP_Parser = require("./parser.js");
-		var HP_Classes = require("./classes.js");
+		var Config = require("./config.js");
+		var Parser = require("./parser.js");
+		var Classes = require("./classes.js");
 
 		exports.ruleProcessor = new (function () {
 			function RuleProcessorClass() {
@@ -226,7 +278,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 			_createClass(RuleProcessorClass, [{
 				key: "parse",
 				value: function parse(query) {
-					var response = new HP_Classes.processResponse(query.rule, query.value);
+					var response = new Classes.processResponse(query.rule, query.value || query.markup[query.key]);
 
 					if (!query.request) {} else if (!query.key) {} else if (query.request) {
 								var func = "" + query.request + (query.operator ? "_" + query.operator : "");
@@ -242,10 +294,24 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 			}, {
 				key: "template",
 				value: function template(query) {
-
+					var response = new Classes.processResponse(query.rule, query.rule, false);
 					var content = "";
 
-					var response = new HP_Classes.processResponse(query.rule, HP_Parser.parser.parse(query.key, query.markup[query.key]));
+					if (Parser.parser.hasTemplate(query.key)) response.value = Parser.parser.parse(query.template, query.markup);else {
+
+							var postQuery = new Classes.postQuery(Parser.parser._prepareQuery(query.rule, new Classes.template(query.key), query.markup[query.key]));
+							response.postQuery = postQuery;
+						}
+
+					return response;
+				}
+			}, {
+				key: "template_start",
+				value: function template_start(query) {
+					var templatePieces = Config.regex.extract_area("template", query.key).exec(query.template.value);
+					Parser.parser.addTemplate(query.key, templatePieces[1]);
+
+					var response = new Classes.processResponse(templatePieces[0], Parser.parser.parse(query.key, query.markup[query.key]));
 
 					return response;
 				}
@@ -254,7 +320,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 				value: function foreach_start(query) {
 					if (!query.rule || query.value && query.value.constructor !== Array) return null;
 
-					var templatePieces = HP_Config.regex.extract_area("foreach", query.key).exec(query.template.value);
+					var templatePieces = Config.regex.extract_area("foreach", query.key).exec(query.template.value);
 
 					var content = "";
 
@@ -267,10 +333,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 						markup.hp_index = parseInt(index) + 1;
 						markup.hp_index_raw = index;
 
-						content += HP_Parser.parser._parse(new HP_Classes.template(templatePieces[1]), markup);
+						content += Parser.parser._parse(new Classes.template(templatePieces[1]), markup);
 					};
 
-					var response = new HP_Classes.processResponse(templatePieces[0], content);
+					var response = new Classes.processResponse(templatePieces[0], content);
 
 					return response;
 				}
@@ -290,9 +356,21 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 							}
 						} else content = process.markup;
 
-					var response = new HP_Classes.processResponse(process.rule.rule, content);
+					var response = new Classes.processResponse(process.rule.rule, content);
 
 					return response;
+				}
+			}, {
+				key: "_buildSingleRequest",
+				value: function _buildSingleRequest(request, key) {
+					var operator = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+
+					return "{{ " + request + " " + (operator ? operator : "") + ": " + key + " }}";
+				}
+			}, {
+				key: "_buildAreaRequest",
+				value: function _buildAreaRequest(request, range, key, content) {
+					return "{{ " + request + " " + range.begin + ": " + key + " }}" + content + "{{ " + request + " " + range.end + ": " + key + " }}";
 				}
 			}]);
 
