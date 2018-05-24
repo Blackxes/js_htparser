@@ -113,7 +113,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 	}, {}], 3: [function (require, module, exports) {
 		exports.parser = require("./parser.js").parser;
 
-		if (window) window.jsHTParser = require("./parser.js").parser;
+		if (window) window.js_htparser = require("./parser.js").parser;
 	}, { "./parser.js": 4 }], 4: [function (require, module, exports) {
 		var HP_Config = require("./config.js");
 		var HP_RuleProcessor = require("./ruleProcessor.js");
