@@ -185,8 +185,12 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 					while (match = regexExtractRule.exec(content)) {
 
 						var query = this._prepareQuery(match[0], template, markup);
-
 						var response = HP_RuleProcessor.ruleProcessor.parse(query);
+
+						if (response.value) {
+
+							if (response.value.constructor === Function) response.value = String(response.value());else if (response.value.constructor !== String) response.value = String(response.value);
+						} else response.value = String();
 
 						content = content.replace(response.replacement, response.value);
 
