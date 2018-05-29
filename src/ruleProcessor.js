@@ -114,7 +114,7 @@ exports.ruleProcessor = new class RuleProcessorClass {
 		
 		// Todo: implement display of invalid markups
 		for (let index in query.value ) {
-
+			
 			if ( !(index in query.value) )
 				continue;
 			
@@ -124,7 +124,7 @@ exports.ruleProcessor = new class RuleProcessorClass {
 			markup.hp_index = parseInt(index) + 1;
 			markup.hp_index_raw = index;
 
-			content += Parser.parser._parse( new Classes.template(templatePieces[1]), markup );
+			content += Parser.parser._parse( new Classes.template(templatePieces[1], true), markup );
 		};
 		
 		let response = new Classes.processResponse( templatePieces[0], content );
