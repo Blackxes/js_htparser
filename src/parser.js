@@ -90,16 +90,32 @@ exports.parser = new class HTMLParserClass {
 		let postQueries = [];
 		
 		while ( match = regexExtractRule.exec(content) ) {
-
-			let query = this._prepareQuery( match[0], template, markup );
 			
+			let query = this._prepareQuery( match[0], template, markup );
 			let response = HP_RuleProcessor.ruleProcessor.parse( query );
+
+			// convert response value to avoid bug with String.replace();
+			if ( response.value ) {
+
+				if (response.value.constructor === Function)
+					response.value = String(response.value());
+
+				else if (response.value.constructor !== String)
+					response.value = String(response.value);
+			}
+			
+			else
+				response.value = String();
 			
 			content = content.replace( response.replacement, response.value );
 
-			// adjust regex last index because the content changed
-			// to ensure the search get all rules this is needed
-			regexExtractRule.lastIndex -= response.replacement.length - response.value.length || 0;
+			// adjust index to match every marker / replacement might be shorter than the marker
+			// the lastIndex property still points to the charakter after the closing rule bracket "}"
+			// moving the last index makes sure that marker match after marker
+			// eg: {{ marker1 }}{{ marker 2 }}
+			// without seting the index marker2 wouldnt be matched and wont be even replaced
+			//
+			regexExtractRule.lastIndex -= (response.replacement.length - response.value.length) || 0;
 
 			// post queries needs to be parsed later on because they depend
 			// on other requests to be proceeded before
