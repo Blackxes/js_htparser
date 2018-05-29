@@ -337,7 +337,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 						markup.hp_index = parseInt(index) + 1;
 						markup.hp_index_raw = index;
 
-						content += Parser.parser._parse(new Classes.template(templatePieces[1]), markup);
+						content += Parser.parser._parse(new Classes.template(templatePieces[1], true), markup);
 					};
 
 					var response = new Classes.processResponse(templatePieces[0], content);
