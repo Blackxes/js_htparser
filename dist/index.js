@@ -232,10 +232,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 								if (response.value && response.value.constructor !== String || response.value.constructor !== Function) response.value = String(response.value);
 							}
 
-						oldLastIndex = regex.lastIndex;
-
 						var indexAdjustment = -(query.rule.length - response.value.length);
 						regex.lastIndex += indexAdjustment;
+
+						oldLastIndex = regex.lastIndex;
 
 						var oldContent = content;
 
