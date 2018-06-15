@@ -9,20 +9,22 @@
 
 /*********************************************************************************************/
 
+/* jshint -W084 */
+
 // includes
 // general configuration
 exports.config = {};
 
 //_____________________________________________________________________________________________
 // regex for extracting and filtering
-exports.regex = {}
+exports.regex = {};
 
 // matches a rule within a template
-exports.regex.extract_rule = function () { return new RegExp("{{([^<>{}]*)}}", "g"); }
+exports.regex.extract_rule = function() { return new RegExp("{{([^<>]*?)}}", "g"); };
 
 // filters a rule into the specific parts
 // const HP_REGEX_FILTER_RULE = function() { return new RegExp(`{{\\s*(\\w+)\\s*(\\w*)[:]\\s*([\\w+\\.]*)\\s*|{{\\s*(\\w+)\\s*}}`, "g"); }
-exports.regex.filter_rule = function() { return new RegExp("{{\\s*(\\w+)\\s*(\\w*)[:]\\s*(\\w*)\\s*}}|{{\\s*(\\w+)\\s*}}", "g"); }
+exports.regex.filter_rule = function() { return new RegExp("{{\\s*(\\w+)\\s*(\\w*)[:]\\s*([\\w\\-]*)\\s*}}|{{\\s*([\\w\\-]+)\\s*}}", "g"); };
 
 // matches a complete substring from the template including content (can be accessed via group)
 //
@@ -32,9 +34,25 @@ exports.regex.filter_rule = function() { return new RegExp("{{\\s*(\\w+)\\s*(\\w
 //		begin -> determines the start of the string
 // 		end -> determines the end of the string
 //
-exports.regex.extract_area = function(request, value, range = { "begin": "start", "end": "end" }) {
-	return new RegExp(`{{\\s*${request}\\s+${range.begin}\\s*:\\s*${value}\\s*}}(.*){{\\s*${request}\\s+${range.end}\\s*:\\s*${value}\\s*}}`, "g");
-}
+// exports.regex.extract_area = function(request, value, range = { "begin": "start", "end": "end" }) {
+// 	return new RegExp(`{{\\s*${request}\\s+${range.begin}\\s*:\\s*${value}\\s*}}(.*){{\\s*${request}\\s+${range.end}\\s*:\\s*${value}\\s*}}`, "g");
+// };
+
+//
+exports.regex.extract_area = function(request, operator, value) {
+	return new RegExp( `{{\\s*${request}\\s*${operator.begin}\\s*:\\s*${value}\\s*}}(.*?){{\\s*${request}\\s*${operator.end}\\s*([\\w+]*):\\s*${value}\\s*}}`, "g" );
+};
+
+//_____________________________________________________________________________________________
+// debugging configuration
+// exports.debug = {};
+
+// display messages in general
+// exports.debug.display = true;
+
+// display trace
+// exports.debug.display_trace = true;
+
 
 //_____________________________________________________________________________________________
 // rule parsing configuration
