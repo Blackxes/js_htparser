@@ -168,13 +168,13 @@ exports.parser = new class HTMLParserClass {
 					response.value = String(response.value);
 			}
 
-			oldLastIndex = regex.lastIndex;
-
 			// calculate the regex iterator position change cause the replaced substring within the content
 			// changed but the iterator still pointing to the position before the change
 			// implement debugging displayment / current-last index
 			let indexAdjustment = -(query.rule.length - response.value.length);
 			regex.lastIndex += indexAdjustment;
+
+			oldLastIndex = regex.lastIndex;
 
 			let oldContent = content;
 
