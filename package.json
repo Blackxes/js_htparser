@@ -21,7 +21,9 @@
     "concurrently": "^3.5.1",
     "watchify": "^3.11.0"
   },
-  "dependencies": {},
+  "dependencies": {
+    "npm": "^6.1.0"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/Blackxes/js_htparser.git"
