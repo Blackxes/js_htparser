@@ -20,9 +20,7 @@
     "browserify": "^16.2.2",
     "watchify": "^3.11.0"
   },
-  "dependencies": {
-    "npm": "^6.1.0"
-  },
+  "dependencies": {},
   "repository": {
     "type": "git",
     "url": "https://github.com/Blackxes/js_htparser.git"
