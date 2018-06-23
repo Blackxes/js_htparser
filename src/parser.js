@@ -13,7 +13,7 @@
 
 // includes
 var Config = require( "./config.js" );
-var RuleProcessor = require( "./ruleProcessor.js" );
+var RequestProcessor = require( "./requestProcessor.js" );
 var Classes = require( "./classes.js" );
 
 //_____________________________________________________________________________________________
@@ -23,6 +23,8 @@ exports.parser = new class HTMLParserClass {
 	constructor() {
 
 		this.templates = {};
+		this.tprocesses = {};
+		this._latestProcessId = 0;
 
 		this._loadTemplates();
 	}
@@ -44,7 +46,6 @@ exports.parser = new class HTMLParserClass {
 				continue;
 
 			let el = children[index];
-
 			let templateId = el.dataset.templateId;
 
 			if (!templateId)
@@ -62,15 +63,15 @@ exports.parser = new class HTMLParserClass {
 	registerTemplate( id, template ) {
 
 		// Todo: implement displayment of duplicated templates
-
 		if (!id || id && id.constructor !== String ||
 			!template || template.constructor !== String)
 		{
+			console.log("fails", id, template);
 			return false;
 		}
 
 		else if ( this.hasTemplate(id) ) {
-			console.log("HTParser: duplicate template: '%s'", id);
+			console.log("HTParser: duplicated template found: '%s'", id);
 			return false;
 		}
 
@@ -81,38 +82,43 @@ exports.parser = new class HTMLParserClass {
 
 	//_________________________________________________________________________________________
 	// user entrance function to handle the params correctly
-	parse( templateDefinition, markup ) {
+	//
+	// param1 (string|TemplateObject) expects either the templateId or a template instance
+	// param2 (object) expects the markup of the template
+	//
+	parse( templateDefinition, markup, displayTime = true ) {
 
 		if ( !templateDefinition || markup && markup.constructor !== Object )
 			return "";
 
 		let template = "";
 
-		if ( templateDefinition instanceof Classes.template )
-			template = templateDefinition;
-		else
-			template = this.getTemplate( templateDefinition );
+		template = ( templateDefinition instanceof Classes.template )
+			? templateDefinition
+			: this.getTemplate( templateDefinition );
+		
+		let start = Date.now();
+		let content = this._parse( template, markup );
+		let end = Date.now();
 
-		let timeStart = Date.now();
+		if ( displayTime )
+			console.log( "HTParser: parsing took %sms", (end - start) );
 
-		let result = this._parse ( template || "", markup || {} );
-
-		console.log("HTParser: parsing took %dms", Date.now() - timeStart);
-
-		return result;
+		return content;
 	}
 
 	//_________________________________________________________________________________________
 	// actual template parsing
-	_parse( _template, markup ) {
+	//
+	// param1 (TemplateClass) expects the template object
+	// param2 (object) expects the object
+	//
+	_parse( template, markup ) {
 
-		let template = ( !(_template instanceof Classes.template ) ) ? new Classes.template( null, _template ) : _template;
-
-		let content = this._queryTemplate( template, markup, function( query ) {
+		let content = this._processTemplate( template, markup, function( query ) {
 
 			// use processing functions to get response
-			let response = RuleProcessor.ruleProcessor.parse( query );
-
+			let response = RequestProcessor.requestProcessor.processRequest( query );
 			return response;
 		});
 
@@ -120,174 +126,428 @@ exports.parser = new class HTMLParserClass {
 	}
 
 	//_________________________________________________________________________________________
-	// executes the regex onto the given templates
-	_queryTemplate( template, _markup, _callback, _this = null ) {
+	// queries through the given template and executes the rule extraction regex onto it
+	// builds the querry for the matched rule and builds, based on the returned response
+	// of the callback, the content.
 
-		// console.log("QueryT: ", template, _markup);
+	_processTemplate( template, markup, _callback, _this = null ) {
 
-		// constant values
-		let regex = Config.regex.extract_rule();
-		let markup = this._prepareMarkup( template, _markup );
-		let callback = (_callback && _callback.constructor == Function) ? _callback.bind(_this || this) : function() {};
+		// register current template process
+		let tProcess = this._createTProcess( template, markup );
 
-		// progressing
+		// constant values / they are used not changed
+		let regExtractRule = Config.regex.extractRule();
+		let callback = ( _callback && _callback.constructor == Function ) ? _callback.bind( _this || this ) : () => null;
+		tProcess.baseMarkup = this._buildBaseMarkup( tProcess );
+
+		// values that being ressigned while processing
+		let rawRule = null;
 		let content = template.value;
-		let postQueries = [];
-		let match = null;
-		let oldLastIndex = regex.lastIndex;
+		let oldLastIndex = regExtractRule.lastIndex;
+		let postQuerries = [];
 
-		// query templates marker
-		while (match = regex.exec( content )) {
+		while ( rawRule = regExtractRule.exec(content) ) {
+			
+			let rule = this._buildRule( tProcess, rawRule[0] );
+			let query = new Classes.query( tProcess.id, rule, content.substring(oldLastIndex), false );
+			tProcess.currentQuery = query;
 
-			let rule = this._filterRule( match[0] );
+			// get and review response / the rule is used to build a default response
+			let response = this._reviewProcessResponse( tProcess, callback( query ) );
 
-			// console.log("Match: %s (%d) %s \n\t%o", template.id || "not given", regex.lastIndex, rule.rule, markup);
+			// track post queries
+			if ( response.postQuery )
+				postQuerries.push( response.postQuery );
+			
+			// adjust last index to avoid unecessary regex execution and fails when searching for rules
+			// replacements smaller than the rule itself in length result in missing rules
+			// written directly after the rule
+			regExtractRule.lastIndex += (response.indexOffSet !== null)
+				? Number(response.indexOffSet)
+				: -(query.rule.length - response.value.length);
 
-			let subTemplate = content.substring( oldLastIndex );
+			// the last index is needed to create a substring from the content
+			// to speed up the processing when the processing functions query inner rules
+			oldLastIndex = regExtractRule.lastIndex;
 
-			let query = this._prepareQuery( rule, subTemplate, markup );
-
-			// console.log("QT: Query: %o", query);
-
-			let response = callback( query );
-
-			// console.log("QT: CallbackResponse: %o", response);
-
-			// post queries needs to be parsed later on because they depend
-			// on other requests to be proceeded before
-			if (response.postQuery)
-				postQueries.push( response.postQuery );
-
-			// adjust types cause the processing functions might not return a string but null
-			else {
-
-				if ( response.replacement && response.replacement.constructor !== String)
-					response.replacement = String(response.replacement);
-
-				if ( response.value && response.value.constructor !== String || response.value.constructor !== Function )
-					response.value = String(response.value);
-			}
-
-			// calculate the regex iterator position change cause the replaced substring within the content
-			// changed but the iterator still pointing to the position before the change
-			// implement debugging displayment / current-last index
-			let indexAdjustment = -(query.rule.length - response.value.length);
-			regex.lastIndex += indexAdjustment;
-
-			oldLastIndex = regex.lastIndex;
-
-			let oldContent = content;
-
-			// console.log("Response (%s): %o", query.rule, response.value);
-
-			content = content.replace( response.replacement, response.value || "" );
-
-			// console.log("Content (Old:%d New:%d Adjust:%d): \n\tOld: %s \n\tNew: %s", oldLastIndex, regex.lastIndex, indexAdjustment, oldContent, content);
-			// console.log("------------------------------------------");
+			// !! THE HEART LINE of this framework !! YEAAAAAH !!
+			// - and the one in the post query post processing
+			//
+			// finally replacing the content with its value
+			// for semantic reason this has to happen after the index got adjusted
+			// console.log(response);
+			content = content.replace( response.replacement, query.options.wrap.replace( "|", response.value ) );
 		}
 
-		// some querries rely on others and need to be executed later on
-		// eg. the template requests a template thats been used and declared
-		// later in the same template / that template is known by the parser later on
-		postQueries.forEach( (postQuery) => {
+		// process post queries
+		postQuerries.forEach( (postQuery) => {
 
-			// console.log("PostQuery", postQuery.rule);
-
-			// when template is not giving at this time / it cant be parsed
-			if ( !postQuery.template )
-				content = content.replace( postQuery.rule, "" );
-
-			let response = RuleProcessor.ruleProcessor.parse( postQuery );
+			let response = callback( postQuery );
 			content = content.replace( response.replacement, response.value );
-
-			// console.log("PostQuerries Done");
 		});
 
-		// console.log("Parsing Done \n\tFinal Content: %s\n------------------------------------------------------", content);
+		// delete process
+		this._deleteTProcess( tProcess.id );
 
 		return content;
 	}
 
 	//_________________________________________________________________________________________
-	// splits given rule into its pieces and returns an assossiated object
-	_filterRule( rawRule ) {
+	// builds the base markup for the processing template
+	//
+	// param1 (TemplateProcessClass) expects the template process instance
+	//
+	// return Object
+	//
+	_buildBaseMarkup( tProcess ) {
 
-		// Todo: implement display of invalid parameter
-		if ( !rawRule || rawRule.constructor !== String )
-			return new Classes.rule();
+		if ( !tProcess || !(tProcess instanceof Classes.tprocess) )
+			return {};
 
-		let pieces = Config.regex.filter_rule().exec( rawRule );
+		let base = {};
 
-		if (!pieces) {
+		// Todo: implement relation to parent templates when a subprocess
+		base.hp_templateId = tProcess.template.id || (tProcess.isSubProcess) ? "Subtemplate": "Undefined template id";
 
-			console.warn("HTParser: Invalid rule found: %s", rawRule);
-			return new Classes.rule( rawRule, null, null, null );
-		}
+		return base;
+	}
 
-		// rule / request / operator / key
-		let rule = new Classes.rule(
-			pieces[0] || rawRule,
-			pieces[1] || pieces[4],
-			pieces[2],
-			pieces[3]
+	//_________________________________________________________________________________________
+	// builds the rule object for further processing
+	//
+	// param2 (TemplateProcessClass) expects the process instance
+	// param2 (String) expects the raw rule
+	//
+	// return RuleClass
+	//
+	_buildRule( tProcess, rawRule ) {
+		
+		// build base rule
+		let request = this._extractRulePiece( rawRule, Config.regex.extractRequest() ) || null;
+		let key = this._extractRulePiece( rawRule, Config.regex.extractKey() ) || null;
+
+		let options = Object.assign( {},
+			Config.parsing.optionSets.default,
+			Config.parsing.optionSets[ request ] || {}
 		);
+		let rule = new Classes.rule( rawRule, request, key, null, options );
+
+		// the prio key is the value that defines the key of the markup
+		// marker are referenced with there name in the markup
+		// but the value for commands such as "template" or "foreach" are found under the key in the markup
+		// therefor a priority key is needed to identify the corrent value from the markup
+		let prioKey = key || request;
+		let markup = Object.assign( {}, tProcess.baseMarkup, this._buildRuleMarkup( rule ), tProcess.userMarkup );
+
+		// apply markup configurations
+		let markupConfig = this._applyMarkupConfigOnRuleConfig( rule, markup[prioKey] );
+		rule.options = markupConfig.options;
+		rule.value = markupConfig.value;
 
 		return rule;
 	}
 
 	//_________________________________________________________________________________________
-	// general markup before the template is being parsed
-	// marker like {{ hp_templateId }} are build in here
+	// applies the configuration of the markup onto the ones defined in the rule
 	//
-	_prepareMarkup( template, _markup ) {
+	// param1 (RuleClass) expects the rule instance
+	// param2 (mixed) expects the configuration
+	//
+	// return Object
+	//
+	_applyMarkupConfigOnRuleConfig( rule, config ) {
+		
+		let processedConfig = { "value": null, "options": Object.assign({}, rule.options) };
 
-		// Todo: implement display of invalid parameter
-		if ( !_markup || _markup.constructor !== Object )
+		if ( !rule || !config )
+			return processedConfig;
+		
+		if ( config.constructor === String )
+			processedConfig.value = config;
+
+		else if ( config.constructor === Function )
+			processedConfig.value = config();
+		
+		else if ( config.constructor === Object ) {
+			
+			if ( config["value"] )
+				processedConfig.value = (config.value.constructor === Function) ? config.value() : config.value;
+			else
+				processedConfig.value = config;
+			
+			if ( config["options"] )
+				processedConfig.options = Object.assign( processedConfig.options, this._processOptions(config.options) );
+		}
+
+		else
+			processedConfig.value = config;
+		
+		return processedConfig;
+	}
+
+	//_________________________________________________________________________________________
+	// process options values / simple checks when the option value is a function
+	// and overwrites the value with the returned value from the function
+	//
+	// param1 (Object) expects the options object
+	//
+	// return Object
+	//
+	_processOptions( options ) {
+
+		if ( !options || options.constructor !== Object || !Object.keys(options).length )
 			return {};
 
-		let markup = Object.assign({}, _markup);
-		markup.hp_templateId = template.id || null;
+		for ( let option in options )
+			if ( options[option] && options[option].constructor === Function )
+				options[option] = options[option]();
+		
+		return options;
+	}
+
+	//_________________________________________________________________________________________
+	// returns a markup based on the given rule
+	//
+	// param1 (RuleInstance) expects the process instance
+	//
+	// return Object
+	//
+	_buildRuleMarkup( rule ) {
+
+		if ( !rule || !(rule instanceof Classes.rule) )
+			return {};
+
+		let markup = {
+			"hp_rule": rule.rule,
+			"hp_request": rule.request,
+			"hp_key": rule.key || ""
+		};
+		
+		for ( let i in rule.options ) {
+			markup[`hp_option_${i}`] = rule.options[i];
+		}
 
 		return markup;
 	}
 
 	//_________________________________________________________________________________________
-	// prepares the query for the processing functions
-	_prepareQuery( rule, templateString, markup ) {
+	// gets the request value as "value" and "options" object by the markup and rule
+	//
+	// param1 (string) expects the prioirity key of the rule
+	// param2 (Object) expects the markup value
+	//
+	// return Object
+	//
+	_getRequestValue( prioKey, markup ) {
 
-		let queryMarkup = {};
-		queryMarkup.hp_rule = rule.rule || null;
-		queryMarkup.hp_operator = rule.operator || null;
-		queryMarkup.hp_key = rule.key || null;
+		let config = { "value": null, "options": {} };
+		let value = markup[ prioKey ];
 
-		let query = new Classes.query(
-			rule.rule, rule.request, rule.operator, rule.key,
-			templateString, markup[ rule.key ] || markup[ rule.request ] || ""
-		);
+		if ( !value )
+			return config;
+		
+		if ( value.constructor === String )
+			config.value = value;
+		
+		else if ( value.constructor === Object ) {
+			config.value = value["value"] || null;
+			config.options = this._processOptions(value["options"]);
+		}
 
-		// console.log("PQuery: \n\tRule: %s \n\tTemplate: %s \n\tMarkup: %o \n\tFinal Query: %o", rule.rule, templateString, markup, query);
+		return config;
+	}	
 
-		return query;
+	//_________________________________________________________________________________________
+	// extracts a value from a string with a given regex
+	// a valid result will be qued through the possible matched groups and passed
+	// to the callback and collected in an array that will be returned
+	// when no callback is provided it returns either the first group
+	// the raw match or an empty string
+	//
+	// param1 (string) expects the search string
+	// param2 (RegExp) expects the regex
+	// param3 (Function) (optional) expects a callback function
+	//
+	// return array
+	//
+	_extractRulePiece( source, regex, callback = null ) {
+		
+		let match = regex.exec( source );
+
+		if ( !match )
+			return null;
+		
+		if ( callback && callback.constructor === Function ) {
+
+			let results = [];
+
+			for ( let i = 1;; i++ ) {
+				if ( !match[i] )
+					break;
+				results.push( callback(match[i]) );
+			}
+			return results;
+		}
+		
+		return match[1] || match[0] || "";
 	}
 
 	//_________________________________________________________________________________________
+	// builds the markup for the current query
+	//
+	// param1 (RuleClass) expects the current rule instance
+	//
+	// return Object
+	//
+	_buildQueryMarkup( rule, userMarkup ) {
+
+		let markup = {};
+		markup.hp_rule = rule.rule;
+		markup.hp_request = rule.request;
+		markup.hp_key = rule.key;
+
+		let baseOptions = Config.parsing.defaultOptionSet;
+
+		for ( let i in baseOptions ) {
+			markup[`hp_option_${i}`] = baseOptions[i];
+		}
+
+		return markup;
+	}
+
+	//_________________________________________________________________________________________
+	// checks the given response and corrects it if necessary
+	//
+	// param1 (ProcessResponse) expects the response instance
+	// param2 (RuleClass) expects the processing rule instance
+	//
+	// return ProcessResponse
+	//
+	_reviewProcessResponse( tProcess, response ) {
+
+		if ( !response || !(response instanceof Classes.processResponse) )
+			return new Classes.processResponse( tProcess.currentQuery.rule, "", false );
+		
+		if ( !response.replacement || response.replacement.constructor !== String )
+			response.replacement = rule.rule;
+		
+		if ( !response.value || response.value.constructor !== String && response.value.constructor !== Function )
+			response.value = "";
+
+		return response;
+	}
+
+	//_________________________________________________________________________________________
+	// creates a new template process
+	//
+	// param1 (TemplateClass) expects the template instance
+	//
+	// return undefined | null | >0 Number
+	//
+	_createTProcess( template, markup ) {
+
+		if ( !(template instanceof Classes.template) )
+			return undefined;
+		
+		if ( this._hasTProcess(template.id) )
+			return null;
+		
+		let freshId = this._getFreeTProcessId();
+		this.tprocesses[freshId] = new Classes.tprocess( freshId, template, markup, Boolean(template.id) );
+
+		return this._getTProcess( freshId );
+	}
+
+	//_________________________________________________________________________________________
+	// deletes a template process
+	_deleteTProcess( processId ) {
+
+		if ( !this._getTProcess(processId) )
+			return null;
+		
+		delete this.tprocesses[processId];
+
+		return Boolean( this._getTProcess(processId) );
+	}
+
+	//_________________________________________________________________________________________
+	// returns the existance of a process as a boolean
+	_hasTProcess( processId ) {
+		return Boolean( this.tprocesses[processId] );
+	}
+
+	//_________________________________________________________________________________________
+	// returns a template process
+	_getTProcess( processId ) {
+		return this.tprocesses[processId];
+	}
+
+	//_________________________________________________________________________________________
+	// returns a usable unique process id
+	_getFreeTProcessId() {
+
+		let id = ++Object.values(this.tprocesses).length;
+		while ( this.tprocesses[this.tprocesses.length] )
+			id++;
+
+		return id;
+	}
+
+	//_________________________________________________________________________________________
+	// defines either the full options of a template or a specific option
+	//
+	// param1 (String) expects the template id
+	// param2 (String|Object) expects either the options object or the option key
+	// param3 (mixed) expects the value for a option / only used when param2 is a string
+	//
+	// return Boolean
+	//
+	setTemplateOptions( templateId, definition, value ) {
+
+		if ( !this.hasTemplate(templateId) || !definition )
+			return false;
+		
+		if ( definition.constructor === Object )
+			this.getTemplate( templateId ).options = definition;
+
+		else if ( definition.constructor === String )
+			this.getTemplate( templateId ).options[definition] = value;
+		
+		else
+			return false;
+		
+		return true;
+	}
+	
+	//_________________________________________________________________________________________
 	// returns a template
+	//
+	// param1 (String) expects the template id
+	//
+	// return null | TemplateClass
+	//
 	getTemplate( templateId ) {
 
 		if (!this.templates[templateId])
-			return false;
+			return null;
 
 		return this.templates[templateId];
 	}
 
 	//_________________________________________________________________________________________
 	// extracts a substring from a string
-	getSubTemplate( _template, request, key ) {
+	//
+	// param1 (string|object) expects either the template as string or the object instance
+	// param2 (RuleClass) expects the rule instance
+	//
+	// return null | string
+	//
+	getSubTemplate( templateDefinition, rule ) {
 
 		if ( !_template || !request || !key )
-			return "";
+			return null;
 
-		let template = this.hasTemplate(_template) ? this.getTemplate(_template) : _template;
+		let template = this.hasTemplate(templateDefinition) ? this.getTemplate(templateDefinition) : templateDefinition;
 
 		let subtemplate = Config.regex.extract_area(request, key).exec(template)[1];
 
@@ -296,6 +556,9 @@ exports.parser = new class HTMLParserClass {
 
 	//_________________________________________________________________________________________
 	// returns the existance of a template
+	//
+	// return boolean
+	//
 	hasTemplate( templateId ) {
 		return Boolean(this.templates[templateId]);
 	}

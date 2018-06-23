@@ -1,4 +1,5 @@
 node_modules/
 test/
 .babelrc
+.jshintrc
 planning.txt

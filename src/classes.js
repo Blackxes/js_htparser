@@ -13,20 +13,41 @@
 var Parser = require( "./parser.js" );
 
 //_____________________________________________________________________________________________
-// contains information about a template
-exports.template = class templateClass {
+// contains information about a general template process
+exports.tprocess = class TemplateProcessClass {
 
 	//_________________________________________________________________________________________
-	constructor( id, value ) {
+	constructor( id, template, userMarkup, isSubProcess) {
+
+		this.id = id || null;
+		this.template = template || null;
+		this.userMarkup = userMarkup || null;
+		this.baseMarkup = null;
+		this.currentQuery = null;
+		this.isSubProcess = isSubProcess || false;
+	}
+
+	//_________________________________________________________________________________________
+	//
+	
+};
+
+//_____________________________________________________________________________________________
+// contains information about a template
+exports.template = class TemplateClass {
+
+	//_________________________________________________________________________________________
+	constructor( id, value, options ) {
 
 		this.id = ( id && id.constructor === String ) ? id : "";
 		this._value = ( value || typeof value === "string" ) ? value : "";
+		this.options = options || null;
 	}
 
 	//_________________________________________________________________________________________
 	//
 	get value() {
-
+		
 		if ( !this._value && this.id )
 			return Parser.parser.getTemplate( this.id )._value;
 
@@ -43,35 +64,32 @@ exports.template = class templateClass {
 exports.rule = class RuleClass {
 
 	//_________________________________________________________________________________________
-	constructor( rule, request, operator, key ) {
+	constructor( rule, request, key, value, options ) {
 
 		this.rule = rule || null;
 		this.request = request || null;
-		this.operator = operator || null;
-		this.key = key || null;
+		this.key = key || null
+		this.value = value || null;
+		this.options = options || null;
 	}
 
 	//_________________________________________________________________________________________
 	//
 
-};
+}; 
 
 //_____________________________________________________________________________________________
 // contains information about the current processing template and its request
-exports.query = class QueryClass {
+exports.query = class QueryClass extends exports.rule {
 
 	//_________________________________________________________________________________________
-	constructor( rule, request, operator, key, template, value, isPostQuery = false) {
+	constructor( processId, rule, template, isPostQuery = false) {
 
-		this.rule = rule || null;
-		this.request = request || null;
-		this.operator = operator || null;
-		this.key = key || null;
+		super( rule.rule, rule.request, rule.key, rule.value, rule.options );
+		
+		this.processId = processId;
 		this.template = template || null;
-		this.value = value || null;
 		this.isPostQuery = isPostQuery || false;
-
-		this.templateId = null;
 	}
 
 	//_________________________________________________________________________________________
@@ -86,29 +104,15 @@ exports.query = class QueryClass {
 exports.processResponse = class ProcessResponseClass {
 
 	//_________________________________________________________________________________________
-	constructor( replacement, value, postQuery ) {
+	constructor( replacement, value, postQuery, indexOffSet ) {
 
 		this.replacement = replacement || "";
 		this.value = value || "";
 		this.postQuery = (postQuery !== undefined) ? postQuery : null;
-	}
+		this.indexOffSet = (indexOffSet != undefined) ? indexOffSet : null;
 
-	//_________________________________________________________________________________________
-	//
-
-};
-
-//_____________________________________________________________________________________________
-// post query / when a rule needs to be parsed later on due to dependencies
-exports.postQuery = class PostQueryClass extends exports.query {
-
-	//_________________________________________________________________________________________
-	constructor( query, _template, _markup ) {
-
-		let template = _template || query.template;
-		let markup = _markup || query.markup;
-
-		super( query.rule, query.request, query.operator, query.key, template, markup, query.value, true );
+		if ( this.postQuery )
+			this.postQuery.isPostQuery = true;
 	}
 
 	//_________________________________________________________________________________________
