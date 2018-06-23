@@ -42,7 +42,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 				this.id = id && id.constructor === String ? id : "";
 				this._value = value || typeof value === "string" ? value : "";
-				this.options = options || null;
+				this.options = options || {};
 			}
 
 			_createClass(TemplateClass, [{
@@ -97,6 +97,27 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 			if (this.postQuery) this.postQuery.isPostQuery = true;
 		};
+
+		var TemplatesClass = function () {
+			function TemplatesClass() {
+				_classCallCheck(this, TemplatesClass);
+
+				this.templates = {};
+
+				this.templates["hp_debug_messages"] = this.hp_debug_messages();
+			}
+
+			_createClass(TemplatesClass, [{
+				key: "hp_debug_messages",
+				value: function hp_debug_messages() {
+					return "\n\t\t\t<div class=\"hp-debug-messages\">\n\t\t\t{{ foreach: hp_debug_messages }}\n\t\t\t\t<p>{{ message }}</p>\n\t\t\t{{ foreach end: hp_debug_messages }}\n\t\t\t</div>\n\t\t";
+				}
+			}]);
+
+			return TemplatesClass;
+		}();
+
+		exports.templates = new TemplatesClass().templates;
 	}, { "./parser.js": 4 }], 2: [function (require, module, exports) {
 		exports.config = {};
 
@@ -176,7 +197,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 						if (!this.registerTemplate(templateId, el.innerHTML)) console.log("HTParser: registering template %s failed", templateId);
 					}
 
-					return true;
+					for (var i in Classes.templates) {
+						this.registerTemplate(i, Classes.templates[i]);
+					}return true;
 				}
 			}, {
 				key: "registerTemplate",
@@ -458,9 +481,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 				key: "setTemplateOptions",
 				value: function setTemplateOptions(templateId, definition, value) {
 
-					if (!this.hasTemplate(templateId) || !definition) return false;
+					if (!this.hasTemplate(templateId)) return false;
 
-					if (definition.constructor === Object) this.getTemplate(templateId).options = definition;else if (definition.constructor === String) this.getTemplate(templateId).options[definition] = value;else return false;
+					if (!definition && !value) this.getTemplate(templateId).options = {};else if (definition.constructor === Object) this.getTemplate(templateId).options = definition;else if (definition.constructor === String) this.getTemplate(templateId).options[definition] = value;else return false;
 
 					return true;
 				}
@@ -565,6 +588,12 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 					response.value = content;
 
 					return response;
+				}
+			}, {
+				key: "debug",
+				value: function debug(query) {
+
+					var response = new Classes.processResponse(query.rule, "no data found", false);
 				}
 			}]);
 
