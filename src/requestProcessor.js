@@ -136,6 +136,23 @@ exports.requestProcessor = new class RequestProcessor {
 	}
 
 	//_________________________________________________________________________________________
+	// prints out information about a markup configuration and the current template process
+	//
+	// param1 (QueryClass) expects the query instance
+	//
+	// return ProcessResponseClass
+	//
+	debug( query ) {
+
+		// Todo: finish "debug" command implementation!
+		let response = new Classes.processResponse( query.rule, "no data found", false );
+
+		response.value = "Currently not implemented!";
+
+		return response;
+	}
+
+	//_________________________________________________________________________________________
 	//
 
 }();

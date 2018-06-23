@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+	<meta name="author" content="Alexander Bassov">
+
+	<title>template parser</title>
+
+	<link rel="stylesheet" type="text/css" href="./main.css">
+</head>
+<body>
+
+	<div id="app"></div>
+
+	<template id="templates">
+
+		<!-- basic marker functionality -->
+		<template data-template-id="test-basic-marker-functionality">
+			<h3>Test: {{ hp_templateId }}</h3>
+			<p>{{ first_name }} {{ last_name }}</p>
+			<p>{{ email }}</p>
+		</template>
+
+		<!-- base templates -->
+		<template data-template-id="base-template">
+			<p>Base Template</p>
+		</template>
+
+		<!-- testing template inline declaration -->
+		<template data-template-id="test-template-inline-declaration">
+			{{ templateInline: inline-template }}
+				<p>template inline declaration</p>
+			{{ templateInline end: inline-template }}
+		</template>
+
+		<!-- testing template place -->
+		<template data-template-id="test-template-placeholder">
+			<h3>Test: "{{ hp_templateId }}"</h3>
+			{{ template: test-placeholder-template }}
+		</template>
+
+		<!-- placeholder template for testing template placeholder -->
+		<template data-template-id="test-placeholder-template">
+			<p>Placeholder Template</hp>
+		</template>
+
+		<!-- testing post template definition -->
+		<template data-template-id="test-post-inline-template-definition">
+			<h3>Test: "{{ hp_templateId }}"</h3>
+			{{ template: post-template }}
+
+			{{ templateInline: post-template }}
+				<p>post inline template declaration</p>
+			{{ templateInline end: post-template }}
+		</template>
+
+		<!-- testing foreach -->
+		<template data-template-id="test-foreach">
+			<h3>Test: "{{ hp_templateId }}"</h3>
+			<ul>
+				{{ foreach: fruits }}
+				<li><p>{{ fruit }}</p></li>
+				{{ foreach end: fruits }}
+			</ul>
+		</template>
+
+		<!-- testing failure marker and commands -->
+		<template data-template-id="test-invalid-rules">
+			<h3>Test: {{ hp_templateId }}</h3>
+
+			<div class="invalid-marker">
+				<p>Invalid Marker</p>
+				<span>{{ }}{{}}</span>
+			</div>
+
+			<div class="invalid-rule-no-request">
+				<p>Invalid Rule (no request)</p>
+				<span>{{ : key }}</span>
+			</div>
+
+			<div class="invalid-rule-invalid-command">
+				<p>Invalid Rule (invalid command)</p>
+				<span>{{ request: key }}</span>
+			</div>
+		</template>
+
+		<!-- test every functionality -->
+		<template data-template-id="test-round-and-round">
+			<h3>Test: {{ hp_templateId }}</h3>
+
+			<p>Autor of Framework: {{ firstName }} {{ lastName }}</p>
+			<p>Name of Framework: {{ frameworkName }}</p>
+			<p>Finished Version: {{ frameworkVersion }}</p>
+			<h3>Hobbies:</h3>
+			<ul class="hobbies">
+				{{ foreach: hobbies }}
+					<li><p>{{ hobby }}</p></li>
+				{{ foreach end: hobbies }}
+			</ul>
+			<h3>Subtemplate: Programminglanguages</h3>
+			{{ template: prog_languages }}
+			{{ templateInline: prog_languages }}
+				<div class="languages">
+					<ul>
+					{{ foreach: prog_languages }}
+						<li><p>{{ language }}</p></li>
+					{{ foreach end: prog_languages }}
+					</ul>
+				</div>
+			{{ templateInline end: prog_languages }}
+		</template>
+
+	</template>
+
+	<!-- <script src="./src/index.js"></script> -->
+	<script src="./package.js"></script>
+</body>

@@ -1,3 +1,241 @@
+(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+//_____________________________________________________________________________________________
+/**********************************************************************************************
+
+	contains several container classes
+
+	@Author: Alexander Bassov
+	@Email: blackxes@gmx.de
+	@Github: https://www.github.com/Blackxes
+
+/*********************************************************************************************/
+
+// includes
+var Parser = require( "./parser.js" );
+
+//_____________________________________________________________________________________________
+// contains information about a general template process
+exports.tprocess = class TemplateProcessClass {
+
+	//_________________________________________________________________________________________
+	constructor( id, template, userMarkup, isSubProcess) {
+
+		this.id = id || null;
+		this.template = template || null;
+		this.userMarkup = userMarkup || null;
+		this.baseMarkup = null;
+		this.currentQuery = null;
+		this.isSubProcess = isSubProcess || false;
+	}
+
+	//_________________________________________________________________________________________
+	//
+	
+};
+
+//_____________________________________________________________________________________________
+// contains information about a template
+exports.template = class TemplateClass {
+
+	//_________________________________________________________________________________________
+	constructor( id, value, options ) {
+
+		this.id = ( id && id.constructor === String ) ? id : "";
+		this._value = ( value || typeof value === "string" ) ? value : "";
+		this.options = options || {};
+	}
+
+	//_________________________________________________________________________________________
+	//
+	get value() {
+		
+		if ( !this._value && this.id )
+			return Parser.parser.getTemplate( this.id )._value;
+
+		return this._value || "";
+	}
+
+	//_________________________________________________________________________________________
+	//
+
+};
+
+//_____________________________________________________________________________________________
+// contains information about the rule
+exports.rule = class RuleClass {
+
+	//_________________________________________________________________________________________
+	constructor( rule, request, key, value, options ) {
+
+		this.rule = rule || null;
+		this.request = request || null;
+		this.key = key || null
+		this.value = value || null;
+		this.options = options || null;
+	}
+
+	//_________________________________________________________________________________________
+	//
+
+}; 
+
+//_____________________________________________________________________________________________
+// contains information about the current processing template and its request
+exports.query = class QueryClass extends exports.rule {
+
+	//_________________________________________________________________________________________
+	constructor( processId, rule, template, isPostQuery = false) {
+
+		super( rule.rule, rule.request, rule.key, rule.value, rule.options );
+		
+		this.processId = processId;
+		this.template = template || null;
+		this.isPostQuery = isPostQuery || false;
+	}
+
+	//_________________________________________________________________________________________
+	//
+
+};
+
+//_____________________________________________________________________________________________
+// contains the final information about the string
+// thats being replaced with the assossiated value
+//
+exports.processResponse = class ProcessResponseClass {
+
+	//_________________________________________________________________________________________
+	constructor( replacement, value, postQuery, indexOffSet ) {
+
+		this.replacement = replacement || "";
+		this.value = value || "";
+		this.postQuery = (postQuery !== undefined) ? postQuery : null;
+		this.indexOffSet = (indexOffSet != undefined) ? indexOffSet : null;
+
+		if ( this.postQuery )
+			this.postQuery.isPostQuery = true;
+	}
+
+	//_________________________________________________________________________________________
+	//
+
+};
+
+//_____________________________________________________________________________________________
+// templates for debugging purposes
+//
+class TemplatesClass {
+
+	//_________________________________________________________________________________________
+	constructor() {
+		this.templates = {};
+
+		this.templates["hp_debug_messages"] = this.hp_debug_messages();
+	}
+
+	//_________________________________________________________________________________________
+	// prints out debugging messages
+	hp_debug_messages() {
+		return `
+			<div class="hp-debug-messages">
+			{{ foreach: hp_debug_messages }}
+				<p>{{ message }}</p>
+			{{ foreach end: hp_debug_messages }}
+			</div>
+		`;
+	}
+
+	//_________________________________________________________________________________________
+	//
+
+}
+exports.templates = (new TemplatesClass()).templates;
+
+//_____________________________________________________________________________________________
+//
+},{"./parser.js":3}],2:[function(require,module,exports){
+//_____________________________________________________________________________________________
+/**********************************************************************************************
+
+	defaults and configuration
+
+	@Author: Alexander Bassov
+	@Email: blackxes@gmx.de
+	@Github: https://www.github.com/Blackxes
+
+/*********************************************************************************************/
+
+/* jshint -W084 */
+
+// includes
+// general configuration
+exports.config = {};
+
+//_____________________________________________________________________________________________
+// regex for extracting and filtering
+exports.regex = {};
+
+// matches a rule within a template
+exports.regex.extractRule = function() { return new RegExp("{{([^<>]*?)}}", "g"); };
+
+// rule filtering regex / extract the request, key and the options string
+exports.regex.extractRequest = function() { return new RegExp("([\\w-]+)(?:[\\w\\s:-]+)?", "g"); }
+exports.regex.extractKey = function() { return new RegExp("{{\\s*(?:[\\w-]+)\\s*:\\s*([\\w-]+)(?:[\\w\\s:-]+)?", "g"); }
+// exports.regex.extractOptionsString = function() { return new RegExp("\\w+(?::\\w+)?\\s+(\\w+[\\s\\w+-:]+)", "g"); }
+
+// extracts single options from the option part within the rule
+// exports.regex.extractOption = () => { return new RegExp("\\s*([\\w-]+)\\s*:\\s*([\\w-]+)\\s*", "g"); };
+
+// extract a substring based on the given rule
+// build based on the given rule to extract area
+exports.regex.extractArea = function( query, id ) { return new RegExp( `${query.rule}(.*?){{\\s*${query.request}\\s+end\\s*:\\s*${id}\\s*}}`, "g" ); };
+
+//_____________________________________________________________________________________________
+// debugging configuration
+exports.debug = {};
+
+// display messages in general
+exports.debug.display = true;
+
+// display trace
+exports.debug.display_trace = true;
+
+//_____________________________________________________________________________________________
+// rule parsing configuration
+exports.parsing = {};
+
+// contains the default option set for a rule
+// Idea: maybe required attribute to each option value?
+//
+exports.parsing.optionSets = {
+	"default": {
+		"render": true,
+		"wrap": "|"
+	},
+	"templateInline": {
+		"renderInline": false
+	}
+};
+
+//_____________________________________________________________________________________________
+// debugging stuff when working with the library
+// Todo: implement debuggin usage
+// exports.config.debug = {};
+
+// displays every invalid value within the template
+// exports.config.debug.displayInvalidValues = true;
+// exports.config.debug.displayInvalidValuesAttributes = {
+// 	"request": true,
+// 	"operator": true,
+// 	"key": true,
+// 	"template": true,
+// 	"value": true
+// };
+
+//_____________________________________________________________________________________________
+//
+
+},{}],3:[function(require,module,exports){
 //_____________________________________________________________________________________________
 /**********************************************************************************************
 
@@ -578,3 +816,291 @@ exports.parser = new class HTMLParserClass {
 
 //_____________________________________________________________________________________________
 //
+},{"./classes.js":1,"./config.js":2,"./requestProcessor.js":4}],4:[function(require,module,exports){
+//_____________________________________________________________________________________________
+/**********************************************************************************************
+
+	contains processing functions of the template library
+
+	@Author: Alexander Bassov
+	@Email: blackxes@gmx.de
+	@Github: https://www.github.com/Blackxes
+
+/*********************************************************************************************/
+
+/* jshint -W084 */
+
+// includes
+var Config = require("./config.js");
+var Parser = require("./parser.js");
+var Classes = require("./classes.js");
+
+//_____________________________________________________________________________________________
+exports.requestProcessor = new class RequestProcessor {
+
+	//_________________________________________________________________________________________
+	constructor() {}
+
+	//_________________________________________________________________________________________
+	// processes the given query based on the request
+	//
+	// param1 (QueryClass) expects the query instance
+	//
+	// return null | ProcessResponseClass
+	//
+	processRequest( query ) {
+
+		if ( String(query.options.render).toLowerCase() == "false" )
+			return new Classes.processResponse( query.rule, null, false );
+		
+		// wether to check if the request function exists
+		// its more common that a marker is given which just needs to be replaced by its value
+		else if ( !(query.request in this) )
+			return new Classes.processResponse(query.rule, query.value, false)
+		
+		return this[ query.request ]( query );
+	}
+
+	//_________________________________________________________________________________________
+	// replaces current scope with the result of another template
+	//
+	// param1 (QueryClass) expects the query instance
+	//
+	// return null | ProcessResponseClass
+	//
+	template( query ) {
+		
+		if ( !query.key )
+			return null;
+		
+		// try to requery at a later state but not when its already a post query
+		if ( !Parser.parser.hasTemplate(query.key) )
+			return new Classes.processResponse( query.rule, (!query.isPostQuery) ? query.rule : "", (!query.isPostQuery) ? query : false, 0 );
+		
+		let response = new Classes.processResponse( query.rule, null, false );
+		let content = Parser.parser.parse( query.key, query.value, false );
+
+		response.value = content;
+
+		return response;
+	}
+
+	//_________________________________________________________________________________________
+	// extract the inline defined template from the given template an stores it
+	// as a separat template with the given id / when the template already exists
+	// a warning is displayed in the console
+	//
+	// param1 (QueryClass) expects the query instance
+	//
+	// return ProcessResponseClass
+	//
+	templateInline( query ) {
+
+		// Todo: implement displayment of invalid key definition
+		if ( !query.key )
+			return null;
+
+		let response = new Classes.processResponse( query.rule, "", false );
+		let templateMatch = Config.regex.extractArea( query, query.key ).exec( query.template );
+
+		// Todo: implement displayment of not found inline template definition
+		if ( !templateMatch )
+			return response;
+		
+		// Todo: implement displayment of unsuccessful registered inline defined template
+		if ( !Parser.parser.registerTemplate(query.key, templateMatch[1]) )
+			return response;
+		
+		response.replacement = templateMatch[0];
+		
+		if ( query.options.renderInline )
+			response.value =  Parser.parser.parse( query.key, query.value );
+
+		return response;
+	}
+
+	//_________________________________________________________________________________________
+	// extracts the content surrounded by the foreach rule and repeats it
+	// with the given configuration defined in the markup by the key
+	//
+	// param1 (QueryClass) expects the query instance
+	//
+	// return ProcessResponseClass
+	//
+	foreach( query ) {
+
+		// Todo: implement displayment of invalid key definition
+		// or invalid markup definition
+		if ( !query.key || !query.value || query.value && query.value.constructor !== Array )
+			return null;
+
+		let response = new Classes.processResponse( query.rule, "", false );
+		let foreachMatch = Config.regex.extractArea( query, query.key ).exec( query.template );
+
+		// Todo: implement displayment of undefined or invalid definition of the foreach command
+		if ( !foreachMatch )
+			return response;
+		
+		response.replacement = foreachMatch[0];
+		let template = foreachMatch[1];
+		let content = "";
+		
+		query.value.forEach( (currentMarkup) => {
+			content += Parser.parser.parse( new Classes.template( null, template ), currentMarkup, false );
+		});
+
+		response.value = content;
+
+		return response;
+	}
+
+	//_________________________________________________________________________________________
+	// prints out information about a markup configuration and the current template process
+	//
+	// param1 (QueryClass) expects the query instance
+	//
+	// return ProcessResponseClass
+	//
+	debug( query ) {
+
+		let response = new Classes.processResponse( query.rule, "no data found", false );
+
+
+
+		// return 
+	}
+
+	//_________________________________________________________________________________________
+	//
+
+}();
+
+//_____________________________________________________________________________________________
+//
+
+},{"./classes.js":1,"./config.js":2,"./parser.js":3}],5:[function(require,module,exports){
+//_____________________________________________________________________________________________
+/**********************************************************************************************
+
+	testing file
+
+	@Author: Alexander Bassov
+	@Email: blackxes@gmx.de
+	@Github: https://www.github.com/Blackxes
+
+/*********************************************************************************************/
+
+let firstName = () => {
+	return false;
+}
+
+var markups = {
+
+	// basic marker functionality
+	"test-basic-marker-functionality": {
+		"first_name": "Alex",
+		"last_name": "Bassov",
+		"email": "blackxes@gmx.de"
+	},
+
+	// template inline declaration
+	"test-template-inline-declaration": {
+		"inline-template": {
+			"options": {
+				"if": function() { return true; }
+			}
+		}
+	},
+
+	// post inline template definition
+	"test-post-inline-template-definition": {
+		"inline-definition": {
+			"inline_marker": "Sick Marker"
+		}
+	},
+
+	// foreach command
+	"test-foreach": {
+		"fruits": [
+			{ "fruit": "apple" },
+			{ "fruit": "avocado" },
+		]
+	},
+
+	// round and round
+	"test-round-and-round": {
+		"firstName": "Alexander",
+		"lastName": "Bassov",
+		"frameworkName": "JS_HTParser",
+		"frameworkVersion": 4,
+		"hobbies": [
+			{ "hobby": "Piano" },
+			{ "hobby": "Programming" },
+			{ "hobby": "Talking" },
+		],
+		"prog_languages": {
+			"prog_languages": [
+				{ "language": "C/C++" },
+				{ "language": "PHP" },
+				{ "language": "JavaScript" },
+				{ "language": "CSS/HTML" },
+			]
+		}
+	},
+
+	"vocabulary-add": {
+		"form-section-title": "Vokabular",
+		"form-items": [
+			{ "form-attribute-for": "form-vocabulary-add", "form-label": "Vokabel" },
+			{ "form-attribute-for": "form-language-add", "form-label": "Sprache" },
+		]
+	}
+};
+
+//_____________________________________________________________________________________________
+document.addEventListener("DOMContentLoaded", function() {
+
+	let parser = require("../src/parser.js").parser;
+	window.js_htparser = parser;
+
+	// test
+	let tests = [
+		"test-basic-marker-functionality",
+		"test-template-inline-declaration",
+		"test-post-inline-template-definition",
+		"test-template-placeholder",
+		"test-foreach",
+		"test-invalid-rules",
+		"test-round-and-round",
+		"vocabulary-add"
+	];
+
+	// define test template
+	let testNumbers = [8];
+
+	// test function
+	var test = function( testNrs ) {
+
+		testNrs.forEach( (testNr) => {
+
+			if ( !tests[testNr - 1] ) {
+				document.getElementById("app").innerHTML += `<p>Test Nr. ${testNr} not found</p>`;
+				return true;
+			}
+
+			console.log("Current Test: %s | Markup: %o\n---", tests[testNr - 1], markups[tests[testNr - 1]] || "none given");
+
+			let result = js_htparser.parse(tests[testNr - 1], markups[tests[testNr - 1]] || {});
+			document.getElementById("app").innerHTML += "<div class=\"test-block\">" + result + "</div>";
+		});
+	};
+	
+	test(testNumbers);
+
+	return true;
+});
+
+//_____________________________________________________________________________________________
+//
+
+},{"../src/parser.js":3}]},{},[5]);
