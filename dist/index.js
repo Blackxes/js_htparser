@@ -25,15 +25,27 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 })()({ 1: [function (require, module, exports) {
 		var Parser = require("./parser.js");
 
+		exports.tprocess = function TemplateProcessClass(id, template, userMarkup, isSubProcess) {
+			_classCallCheck(this, TemplateProcessClass);
+
+			this.id = id || null;
+			this.template = template || null;
+			this.userMarkup = userMarkup || null;
+			this.baseMarkup = null;
+			this.currentQuery = null;
+			this.isSubProcess = isSubProcess || false;
+		};
+
 		exports.template = function () {
-			function templateClass(id, value) {
-				_classCallCheck(this, templateClass);
+			function TemplateClass(id, value, options) {
+				_classCallCheck(this, TemplateClass);
 
 				this.id = id && id.constructor === String ? id : "";
 				this._value = value || typeof value === "string" ? value : "";
+				this.options = options || null;
 			}
 
-			_createClass(templateClass, [{
+			_createClass(TemplateClass, [{
 				key: "value",
 				get: function get() {
 
@@ -43,81 +55,92 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 				}
 			}]);
 
-			return templateClass;
+			return TemplateClass;
 		}();
 
-		exports.rule = function RuleClass(rule, request, operator, key) {
+		exports.rule = function RuleClass(rule, request, key, value, options) {
 			_classCallCheck(this, RuleClass);
 
 			this.rule = rule || null;
 			this.request = request || null;
-			this.operator = operator || null;
 			this.key = key || null;
-		};
-
-		exports.query = function QueryClass(rule, request, operator, key, template, value) {
-			var isPostQuery = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : false;
-
-			_classCallCheck(this, QueryClass);
-
-			this.rule = rule || null;
-			this.request = request || null;
-			this.operator = operator || null;
-			this.key = key || null;
-			this.template = template || null;
 			this.value = value || null;
-			this.isPostQuery = isPostQuery || false;
-
-			this.templateId = null;
+			this.options = options || null;
 		};
 
-		exports.processResponse = function ProcessResponseClass(replacement, value, postQuery) {
+		exports.query = function (_exports$rule) {
+			_inherits(QueryClass, _exports$rule);
+
+			function QueryClass(processId, rule, template) {
+				var isPostQuery = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
+
+				_classCallCheck(this, QueryClass);
+
+				var _this2 = _possibleConstructorReturn(this, (QueryClass.__proto__ || Object.getPrototypeOf(QueryClass)).call(this, rule.rule, rule.request, rule.key, rule.value, rule.options));
+
+				_this2.processId = processId;
+				_this2.template = template || null;
+				_this2.isPostQuery = isPostQuery || false;
+				return _this2;
+			}
+
+			return QueryClass;
+		}(exports.rule);
+
+		exports.processResponse = function ProcessResponseClass(replacement, value, postQuery, indexOffSet) {
 			_classCallCheck(this, ProcessResponseClass);
 
 			this.replacement = replacement || "";
 			this.value = value || "";
 			this.postQuery = postQuery !== undefined ? postQuery : null;
+			this.indexOffSet = indexOffSet != undefined ? indexOffSet : null;
+
+			if (this.postQuery) this.postQuery.isPostQuery = true;
 		};
-
-		exports.postQuery = function (_exports$query) {
-			_inherits(PostQueryClass, _exports$query);
-
-			function PostQueryClass(query, _template, _markup) {
-				_classCallCheck(this, PostQueryClass);
-
-				var template = _template || query.template;
-				var markup = _markup || query.markup;
-
-				return _possibleConstructorReturn(this, (PostQueryClass.__proto__ || Object.getPrototypeOf(PostQueryClass)).call(this, query.rule, query.request, query.operator, query.key, template, markup, query.value, true));
-			}
-
-			return PostQueryClass;
-		}(exports.query);
 	}, { "./parser.js": 4 }], 2: [function (require, module, exports) {
 		exports.config = {};
 
 		exports.regex = {};
 
-		exports.regex.extract_rule = function () {
+		exports.regex.extractRule = function () {
 			return new RegExp("{{([^<>]*?)}}", "g");
 		};
 
-		exports.regex.filter_rule = function () {
-			return new RegExp("{{\\s*(\\w+)\\s*(\\w*)[:]\\s*([\\w\\-]*)\\s*}}|{{\\s*([\\w\\-]+)\\s*}}", "g");
+		exports.regex.extractRequest = function () {
+			return new RegExp("([\\w-]+)(?:[\\w\\s:-]+)?", "g");
+		};
+		exports.regex.extractKey = function () {
+			return new RegExp("{{\\s*(?:[\\w-]+)\\s*:\\s*([\\w-]+)(?:[\\w\\s:-]+)?", "g");
 		};
 
-		exports.regex.extract_area = function (request, operator, value) {
-			return new RegExp("{{\\s*" + request + "\\s*" + operator.begin + "\\s*:\\s*" + value + "\\s*}}(.*?){{\\s*" + request + "\\s*" + operator.end + "\\s*([\\w+]*):\\s*" + value + "\\s*}}", "g");
+		exports.regex.extractArea = function (query, id) {
+			return new RegExp(query.rule + "(.*?){{\\s*" + query.request + "\\s+end\\s*:\\s*" + id + "\\s*}}", "g");
 		};
 
-		exports.config.ruleParsing = {};
+		exports.debug = {};
+
+		exports.debug.display = true;
+
+		exports.debug.display_trace = true;
+
+		exports.parsing = {};
+
+		exports.parsing.optionSets = {
+			"default": {
+				"render": true,
+				"wrap": "|"
+			},
+			"templateInline": {
+				"renderInline": false
+			}
+		};
 	}, {}], 3: [function (require, module, exports) {
 		exports.parser = require("./parser.js").parser;
 
 		if (window) window.js_htparser = require("./parser.js").parser;
 	}, { "./parser.js": 4 }], 4: [function (require, module, exports) {
 		var Config = require("./config.js");
-		var RuleProcessor = require("./ruleProcessor.js");
+		var RequestProcessor = require("./requestProcessor.js");
 		var Classes = require("./classes.js");
 
 		exports.parser = new (function () {
@@ -125,6 +148,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 				_classCallCheck(this, HTMLParserClass);
 
 				this.templates = {};
+				this.tprocesses = {};
+				this._latestProcessId = 0;
 
 				this._loadTemplates();
 			}
@@ -144,7 +169,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 						if (!children.hasOwnProperty(index)) continue;
 
 						var el = children[index];
-
 						var templateId = el.dataset.templateId;
 
 						if (!templateId) continue;
@@ -157,11 +181,11 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 			}, {
 				key: "registerTemplate",
 				value: function registerTemplate(id, template) {
-
 					if (!id || id && id.constructor !== String || !template || template.constructor !== String) {
+						console.log("fails", id, template);
 						return false;
 					} else if (this.hasTemplate(id)) {
-						console.log("HTParser: duplicate template: '%s'", id);
+						console.log("HTParser: duplicated template found: '%s'", id);
 						return false;
 					}
 
@@ -172,140 +196,289 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 			}, {
 				key: "parse",
 				value: function parse(templateDefinition, markup) {
+					var displayTime = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+
 
 					if (!templateDefinition || markup && markup.constructor !== Object) return "";
 
 					var template = "";
 
-					if (templateDefinition instanceof Classes.template) template = templateDefinition;else template = this.getTemplate(templateDefinition);
+					template = templateDefinition instanceof Classes.template ? templateDefinition : this.getTemplate(templateDefinition);
 
-					var timeStart = Date.now();
+					var start = Date.now();
+					var content = this._parse(template, markup);
+					var end = Date.now();
 
-					var result = this._parse(template || "", markup || {});
+					if (displayTime) console.log("HTParser: parsing took %sms", end - start);
 
-					console.log("HTParser: parsing took %dms", Date.now() - timeStart);
-
-					return result;
+					return content;
 				}
 			}, {
 				key: "_parse",
-				value: function _parse(_template, markup) {
+				value: function _parse(template, markup) {
 
-					var template = !(_template instanceof Classes.template) ? new Classes.template(null, _template) : _template;
-
-					var content = this._queryTemplate(template, markup, function (query) {
-						var response = RuleProcessor.ruleProcessor.parse(query);
-
+					var content = this._processTemplate(template, markup, function (query) {
+						var response = RequestProcessor.requestProcessor.processRequest(query);
 						return response;
 					});
 
 					return content;
 				}
 			}, {
-				key: "_queryTemplate",
-				value: function _queryTemplate(template, _markup, _callback) {
+				key: "_processTemplate",
+				value: function _processTemplate(template, markup, _callback) {
 					var _this = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
 
-					var regex = Config.regex.extract_rule();
-					var markup = this._prepareMarkup(template, _markup);
-					var callback = _callback && _callback.constructor == Function ? _callback.bind(_this || this) : function () {};
+					var tProcess = this._createTProcess(template, markup);
 
+					var regExtractRule = Config.regex.extractRule();
+					var callback = _callback && _callback.constructor == Function ? _callback.bind(_this || this) : function () {
+						return null;
+					};
+					tProcess.baseMarkup = this._buildBaseMarkup(tProcess);
+
+					var rawRule = null;
 					var content = template.value;
-					var postQueries = [];
-					var match = null;
-					var oldLastIndex = regex.lastIndex;
+					var oldLastIndex = regExtractRule.lastIndex;
+					var postQuerries = [];
 
-					while (match = regex.exec(content)) {
+					while (rawRule = regExtractRule.exec(content)) {
 
-						var rule = this._filterRule(match[0]);
+						var _rule = this._buildRule(tProcess, rawRule[0]);
+						var query = new Classes.query(tProcess.id, _rule, content.substring(oldLastIndex), false);
+						tProcess.currentQuery = query;
 
-						var subTemplate = content.substring(oldLastIndex);
+						var response = this._reviewProcessResponse(tProcess, callback(query));
 
-						var query = this._prepareQuery(rule, subTemplate, markup);
+						if (response.postQuery) postQuerries.push(response.postQuery);
 
-						var response = callback(query);
+						regExtractRule.lastIndex += response.indexOffSet !== null ? Number(response.indexOffSet) : -(query.rule.length - response.value.length);
 
-						if (response.postQuery) postQueries.push(response.postQuery);else {
+						oldLastIndex = regExtractRule.lastIndex;
 
-								if (response.replacement && response.replacement.constructor !== String) response.replacement = String(response.replacement);
-
-								if (response.value && response.value.constructor !== String || response.value.constructor !== Function) response.value = String(response.value);
-							}
-
-						var indexAdjustment = -(query.rule.length - response.value.length);
-						regex.lastIndex += indexAdjustment;
-
-						oldLastIndex = regex.lastIndex;
-
-						var oldContent = content;
-
-						content = content.replace(response.replacement, response.value || "");
+						content = content.replace(response.replacement, query.options.wrap.replace("|", response.value));
 					}
 
-					postQueries.forEach(function (postQuery) {
-						if (!postQuery.template) content = content.replace(postQuery.rule, "");
+					postQuerries.forEach(function (postQuery) {
 
-						var response = RuleProcessor.ruleProcessor.parse(postQuery);
+						var response = callback(postQuery);
 						content = content.replace(response.replacement, response.value);
 					});
+
+					this._deleteTProcess(tProcess.id);
 
 					return content;
 				}
 			}, {
-				key: "_filterRule",
-				value: function _filterRule(rawRule) {
-					if (!rawRule || rawRule.constructor !== String) return new Classes.rule();
+				key: "_buildBaseMarkup",
+				value: function _buildBaseMarkup(tProcess) {
 
-					var pieces = Config.regex.filter_rule().exec(rawRule);
+					if (!tProcess || !(tProcess instanceof Classes.tprocess)) return {};
 
-					if (!pieces) {
+					var base = {};
 
-						console.warn("HTParser: Invalid rule found: %s", rawRule);
-						return new Classes.rule(rawRule, null, null, null);
-					}
+					base.hp_templateId = tProcess.template.id || tProcess.isSubProcess ? "Subtemplate" : "Undefined template id";
 
-					var rule = new Classes.rule(pieces[0] || rawRule, pieces[1] || pieces[4], pieces[2], pieces[3]);
+					return base;
+				}
+			}, {
+				key: "_buildRule",
+				value: function _buildRule(tProcess, rawRule) {
+					var request = this._extractRulePiece(rawRule, Config.regex.extractRequest()) || null;
+					var key = this._extractRulePiece(rawRule, Config.regex.extractKey()) || null;
+
+					var options = Object.assign({}, Config.parsing.optionSets.default, Config.parsing.optionSets[request] || {});
+					var rule = new Classes.rule(rawRule, request, key, null, options);
+
+					var prioKey = key || request;
+					var markup = Object.assign({}, tProcess.baseMarkup, this._buildRuleMarkup(rule), tProcess.userMarkup);
+
+					var markupConfig = this._applyMarkupConfigOnRuleConfig(rule, markup[prioKey]);
+					rule.options = markupConfig.options;
+					rule.value = markupConfig.value;
 
 					return rule;
 				}
 			}, {
-				key: "_prepareMarkup",
-				value: function _prepareMarkup(template, _markup) {
-					if (!_markup || _markup.constructor !== Object) return {};
+				key: "_applyMarkupConfigOnRuleConfig",
+				value: function _applyMarkupConfigOnRuleConfig(rule, config) {
 
-					var markup = Object.assign({}, _markup);
-					markup.hp_templateId = template.id || null;
+					var processedConfig = { "value": null, "options": Object.assign({}, rule.options) };
+
+					if (!rule || !config) return processedConfig;
+
+					if (config.constructor === String) processedConfig.value = config;else if (config.constructor === Function) processedConfig.value = config();else if (config.constructor === Object) {
+
+						if (config["value"]) processedConfig.value = config.value.constructor === Function ? config.value() : config.value;else processedConfig.value = config;
+
+						if (config["options"]) processedConfig.options = Object.assign(processedConfig.options, this._processOptions(config.options));
+					} else processedConfig.value = config;
+
+					return processedConfig;
+				}
+			}, {
+				key: "_processOptions",
+				value: function _processOptions(options) {
+
+					if (!options || options.constructor !== Object || !Object.keys(options).length) return {};
+
+					for (var option in options) {
+						if (options[option] && options[option].constructor === Function) options[option] = options[option]();
+					}return options;
+				}
+			}, {
+				key: "_buildRuleMarkup",
+				value: function _buildRuleMarkup(rule) {
+
+					if (!rule || !(rule instanceof Classes.rule)) return {};
+
+					var markup = {
+						"hp_rule": rule.rule,
+						"hp_request": rule.request,
+						"hp_key": rule.key || ""
+					};
+
+					for (var i in rule.options) {
+						markup["hp_option_" + i] = rule.options[i];
+					}
 
 					return markup;
 				}
 			}, {
-				key: "_prepareQuery",
-				value: function _prepareQuery(rule, templateString, markup) {
+				key: "_getRequestValue",
+				value: function _getRequestValue(prioKey, markup) {
 
-					var queryMarkup = {};
-					queryMarkup.hp_rule = rule.rule || null;
-					queryMarkup.hp_operator = rule.operator || null;
-					queryMarkup.hp_key = rule.key || null;
+					var config = { "value": null, "options": {} };
+					var value = markup[prioKey];
 
-					var query = new Classes.query(rule.rule, rule.request, rule.operator, rule.key, templateString, markup[rule.key] || markup[rule.request] || "");
+					if (!value) return config;
 
-					return query;
+					if (value.constructor === String) config.value = value;else if (value.constructor === Object) {
+						config.value = value["value"] || null;
+						config.options = this._processOptions(value["options"]);
+					}
+
+					return config;
+				}
+			}, {
+				key: "_extractRulePiece",
+				value: function _extractRulePiece(source, regex) {
+					var callback = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+
+
+					var match = regex.exec(source);
+
+					if (!match) return null;
+
+					if (callback && callback.constructor === Function) {
+
+						var results = [];
+
+						for (var i = 1;; i++) {
+							if (!match[i]) break;
+							results.push(callback(match[i]));
+						}
+						return results;
+					}
+
+					return match[1] || match[0] || "";
+				}
+			}, {
+				key: "_buildQueryMarkup",
+				value: function _buildQueryMarkup(rule, userMarkup) {
+
+					var markup = {};
+					markup.hp_rule = rule.rule;
+					markup.hp_request = rule.request;
+					markup.hp_key = rule.key;
+
+					var baseOptions = Config.parsing.defaultOptionSet;
+
+					for (var i in baseOptions) {
+						markup["hp_option_" + i] = baseOptions[i];
+					}
+
+					return markup;
+				}
+			}, {
+				key: "_reviewProcessResponse",
+				value: function _reviewProcessResponse(tProcess, response) {
+
+					if (!response || !(response instanceof Classes.processResponse)) return new Classes.processResponse(tProcess.currentQuery.rule, "", false);
+
+					if (!response.replacement || response.replacement.constructor !== String) response.replacement = rule.rule;
+
+					if (!response.value || response.value.constructor !== String && response.value.constructor !== Function) response.value = "";
+
+					return response;
+				}
+			}, {
+				key: "_createTProcess",
+				value: function _createTProcess(template, markup) {
+
+					if (!(template instanceof Classes.template)) return undefined;
+
+					if (this._hasTProcess(template.id)) return null;
+
+					var freshId = this._getFreeTProcessId();
+					this.tprocesses[freshId] = new Classes.tprocess(freshId, template, markup, Boolean(template.id));
+
+					return this._getTProcess(freshId);
+				}
+			}, {
+				key: "_deleteTProcess",
+				value: function _deleteTProcess(processId) {
+
+					if (!this._getTProcess(processId)) return null;
+
+					delete this.tprocesses[processId];
+
+					return Boolean(this._getTProcess(processId));
+				}
+			}, {
+				key: "_hasTProcess",
+				value: function _hasTProcess(processId) {
+					return Boolean(this.tprocesses[processId]);
+				}
+			}, {
+				key: "_getTProcess",
+				value: function _getTProcess(processId) {
+					return this.tprocesses[processId];
+				}
+			}, {
+				key: "_getFreeTProcessId",
+				value: function _getFreeTProcessId() {
+
+					var id = ++Object.values(this.tprocesses).length;
+					while (this.tprocesses[this.tprocesses.length]) {
+						id++;
+					}return id;
+				}
+			}, {
+				key: "setTemplateOptions",
+				value: function setTemplateOptions(templateId, definition, value) {
+
+					if (!this.hasTemplate(templateId) || !definition) return false;
+
+					if (definition.constructor === Object) this.getTemplate(templateId).options = definition;else if (definition.constructor === String) this.getTemplate(templateId).options[definition] = value;else return false;
+
+					return true;
 				}
 			}, {
 				key: "getTemplate",
 				value: function getTemplate(templateId) {
 
-					if (!this.templates[templateId]) return false;
+					if (!this.templates[templateId]) return null;
 
 					return this.templates[templateId];
 				}
 			}, {
 				key: "getSubTemplate",
-				value: function getSubTemplate(_template, request, key) {
+				value: function getSubTemplate(templateDefinition, rule) {
 
-					if (!_template || !request || !key) return "";
+					if (!_template || !request || !key) return null;
 
-					var template = this.hasTemplate(_template) ? this.getTemplate(_template) : _template;
+					var template = this.hasTemplate(templateDefinition) ? this.getTemplate(templateDefinition) : templateDefinition;
 
 					var subtemplate = Config.regex.extract_area(request, key).exec(template)[1];
 
@@ -320,84 +493,73 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 			return HTMLParserClass;
 		}())();
-	}, { "./classes.js": 1, "./config.js": 2, "./ruleProcessor.js": 5 }], 5: [function (require, module, exports) {
+	}, { "./classes.js": 1, "./config.js": 2, "./requestProcessor.js": 5 }], 5: [function (require, module, exports) {
 		var Config = require("./config.js");
 		var Parser = require("./parser.js");
 		var Classes = require("./classes.js");
 
-		exports.ruleProcessor = new (function () {
-			function RuleProcessorClass() {
-				_classCallCheck(this, RuleProcessorClass);
+		exports.requestProcessor = new (function () {
+			function RequestProcessor() {
+				_classCallCheck(this, RequestProcessor);
 			}
 
-			_createClass(RuleProcessorClass, [{
-				key: "parse",
-				value: function parse(query) {
-					var response = new Classes.processResponse(query.rule, query.value, false);
+			_createClass(RequestProcessor, [{
+				key: "processRequest",
+				value: function processRequest(query) {
 
-					var func = "" + query.request + (query.operator ? "_" + query.operator : "");
+					if (String(query.options.render).toLowerCase() == "false") return new Classes.processResponse(query.rule, null, false);else if (!(query.request in this)) return new Classes.processResponse(query.rule, query.value, false);
 
-					if (func in this) response = this[func](query);
-
-					return response;
+					return this[query.request](query);
 				}
 			}, {
 				key: "template",
 				value: function template(query) {
+
+					if (!query.key) return null;
+
+					if (!Parser.parser.hasTemplate(query.key)) return new Classes.processResponse(query.rule, !query.isPostQuery ? query.rule : "", !query.isPostQuery ? query : false, 0);
+
+					var response = new Classes.processResponse(query.rule, null, false);
+					var content = Parser.parser.parse(query.key, query.value, false);
+
+					response.value = content;
+
+					return response;
+				}
+			}, {
+				key: "templateInline",
+				value: function templateInline(query) {
+					if (!query.key) return null;
+
 					var response = new Classes.processResponse(query.rule, "", false);
+					var templateMatch = Config.regex.extractArea(query, query.key).exec(query.template);
 
-					if (Parser.parser.hasTemplate(query.key)) response.value = Parser.parser._parse(Parser.parser.getTemplate(query.key), query.value);else if (query instanceof Classes.postQuery) return response;else {
-							response.value = query.rule;
-							response.postQuery = new Classes.postQuery(query, query.template, query.value);
-						}
+					if (!templateMatch) return response;
 
-					return response;
-				}
-			}, {
-				key: "template_inline",
-				value: function template_inline(query) {
+					if (!Parser.parser.registerTemplate(query.key, templateMatch[1])) return response;
 
-					if (!query.key) throw new Error("HTParser: Command 'template inline' is missing template key to create new template. Template: " + query.key);
+					response.replacement = templateMatch[0];
 
-					var pieces = Config.regex.extract_area("template", { "begin": "inline", "end": "" }, query.key).exec(query.template);
-
-					var response = new Classes.processResponse(pieces[0], "", false);
-
-					Parser.parser.registerTemplate(query.key, pieces[1]);
+					if (query.options.renderInline) response.value = Parser.parser.parse(query.key, query.value);
 
 					return response;
 				}
 			}, {
-				key: "foreach_begin",
-				value: function foreach_begin(query) {
-					if (!query.key) {
-						throw new Error("RParser 'foreach': invalidly defined. Template: " + query.template.id);
-					}
+				key: "foreach",
+				value: function foreach(query) {
+					if (!query.key || !query.value || query.value && query.value.constructor !== Array) return null;
 
-					if (!(query.value instanceof Array)) {
-						console.warn("RParser 'foreach': invalid markup given. Expected Array");
-						query.value = [];
-					}
+					var response = new Classes.processResponse(query.rule, "", false);
+					var foreachMatch = Config.regex.extractArea(query, query.key).exec(query.template);
 
-					var response = new Classes.processResponse(query.rule, "");
-					var extractRegex = Config.regex.extract_area("foreach", { "begin": "begin", "end": "end" }, query.key);
-					var templatePieces = extractRegex.exec(query.template);
+					if (!foreachMatch) return response;
 
-					if (!templatePieces) {
-						console.log("RParser 'foreach': template couldnt be extracted: %s", query.rule);
-						return response;
-					}
-
-					response.replacement = templatePieces[0];
-
-					var template = new Classes.template(null, templatePieces[1]);
+					response.replacement = foreachMatch[0];
+					var template = foreachMatch[1];
 					var content = "";
 
-					query.value.forEach(function (markup) {
-
-						if (!markup || markup.constructor !== Object) return true;
-
-						content += Parser.parser._parse(template, markup);
+					query.value.forEach(function (currentMarkup) {
+						content += Parser.parser.parse(new Classes.template(null, template), currentMarkup, false);
 					});
 
 					response.value = content;
@@ -406,6 +568,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 				}
 			}]);
 
-			return RuleProcessorClass;
+			return RequestProcessor;
 		}())();
 	}, { "./classes.js": 1, "./config.js": 2, "./parser.js": 4 }] }, {}, [3]);
