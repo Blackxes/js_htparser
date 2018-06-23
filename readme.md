@@ -1,5 +1,6 @@
 
-# HTML Template parser v2 ( incomplete / outdated - dont read! v3 is done )
+# *outdated! - documentation on v3 follows*
+# HTML Template parser v2 
 
 a simple template markup parse to use within your html
 to build dynamic html content
@@ -19,7 +20,7 @@ this parser searches the body container of the html document for a
 marker are now rules which describe a certain request to the parser.<br>
 a rule looks like the following
 
-```
+```html
 {{ request operator: value }}
 ```
 
