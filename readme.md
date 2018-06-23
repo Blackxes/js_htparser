@@ -1,5 +1,5 @@
 
-# HTML Template parser v2 ( incomplete )
+# HTML Template parser v2 ( incomplete / outdated - dont read! v3 is done )
 
 a simple template markup parse to use within your html
 to build dynamic html content
