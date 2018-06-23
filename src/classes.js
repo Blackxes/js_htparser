@@ -41,7 +41,7 @@ exports.template = class TemplateClass {
 
 		this.id = ( id && id.constructor === String ) ? id : "";
 		this._value = ( value || typeof value === "string" ) ? value : "";
-		this.options = options || null;
+		this.options = options || {};
 	}
 
 	//_________________________________________________________________________________________
@@ -119,6 +119,36 @@ exports.processResponse = class ProcessResponseClass {
 	//
 
 };
+
+//_____________________________________________________________________________________________
+// templates for debugging purposes
+//
+class TemplatesClass {
+
+	//_________________________________________________________________________________________
+	constructor() {
+		this.templates = {};
+
+		this.templates["hp_debug_messages"] = this.hp_debug_messages();
+	}
+
+	//_________________________________________________________________________________________
+	// prints out debugging messages
+	hp_debug_messages() {
+		return `
+			<div class="hp-debug-messages">
+			{{ foreach: hp_debug_messages }}
+				<p>{{ message }}</p>
+			{{ foreach end: hp_debug_messages }}
+			</div>
+		`;
+	}
+
+	//_________________________________________________________________________________________
+	//
+
+}
+exports.templates = (new TemplatesClass()).templates;
 
 //_____________________________________________________________________________________________
 //
