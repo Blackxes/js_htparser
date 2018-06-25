@@ -404,7 +404,7 @@ exports.parser = new class HTMLParserClass {
 	//
 	// return Object
 	//
-	_buildQueryMarkup( rule, userMarkup ) {
+	_buildQueryMarkup( rule ) {
 
 		let markup = {};
 		markup.hp_rule = rule.rule;
@@ -437,7 +437,7 @@ exports.parser = new class HTMLParserClass {
 			response.replacement = rule.rule;
 		
 		if ( !response.value || response.value.constructor !== String && response.value.constructor !== Function )
-			response.value = "";
+			response.value = String(response.value);
 
 		return response;
 	}
