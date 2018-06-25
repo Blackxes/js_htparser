@@ -1,6 +1,6 @@
 {
   "name": "js_htparser",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "main": "index.js",
   "scripts": {
     "dist_build": "browserify src/index.js -o dist/index.js",
