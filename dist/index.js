@@ -2,6 +2,8 @@
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
@@ -119,7 +121,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 		exports.templates = new TemplatesClass().templates;
 	}, { "./parser.js": 4 }], 2: [function (require, module, exports) {
-		exports.config = {};
+		exports.general = {};
+
+		exports.general.systemPrefix = "hp_";
 
 		exports.regex = {};
 
@@ -300,7 +304,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 					var base = {};
 
-					base.hp_templateId = tProcess.template.id || tProcess.isSubProcess ? "Subtemplate" : "Undefined template id";
+					base[Config.general.systemPrefix + "templateId"] = tProcess.template.id || tProcess.isSubProcess ? "Subtemplate" : "Undefined template id";
 
 					return base;
 				}
@@ -352,17 +356,14 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 			}, {
 				key: "_buildRuleMarkup",
 				value: function _buildRuleMarkup(rule) {
+					var _markup;
 
 					if (!rule || !(rule instanceof Classes.rule)) return {};
 
-					var markup = {
-						"hp_rule": rule.rule,
-						"hp_request": rule.request,
-						"hp_key": rule.key || ""
-					};
+					var markup = (_markup = {}, _defineProperty(_markup, Config.general.systemPrefix + "hp_rule", rule.rule), _defineProperty(_markup, Config.general.systemPrefix + "hp_request", rule.request), _defineProperty(_markup, Config.general.systemPrefix + "hp_key", rule.key || ""), _markup);
 
 					for (var i in rule.options) {
-						markup["hp_option_" + i] = rule.options[i];
+						markup[Config.general.systemPrefix + "hp_option_" + i] = rule.options[i];
 					}
 
 					return markup;
@@ -407,23 +408,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 					return match[1] || match[0] || "";
 				}
 			}, {
-				key: "_buildQueryMarkup",
-				value: function _buildQueryMarkup(rule, userMarkup) {
-
-					var markup = {};
-					markup.hp_rule = rule.rule;
-					markup.hp_request = rule.request;
-					markup.hp_key = rule.key;
-
-					var baseOptions = Config.parsing.defaultOptionSet;
-
-					for (var i in baseOptions) {
-						markup["hp_option_" + i] = baseOptions[i];
-					}
-
-					return markup;
-				}
-			}, {
 				key: "_reviewProcessResponse",
 				value: function _reviewProcessResponse(tProcess, response) {
 
@@ -431,7 +415,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 					if (!response.replacement || response.replacement.constructor !== String) response.replacement = rule.rule;
 
-					if (!response.value || response.value.constructor !== String && response.value.constructor !== Function) response.value = "";
+					if (!response.value || response.value.constructor !== String && response.value.constructor !== Function) response.value = String(response.value);
 
 					return response;
 				}
@@ -490,10 +474,19 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 			}, {
 				key: "getTemplate",
 				value: function getTemplate(templateId) {
-
-					if (!this.templates[templateId]) return null;
+					if (!this.templates[templateId] || !templateId.indexOf(Config.general.systemPrefix)) return null;
 
 					return this.templates[templateId];
+				}
+			}, {
+				key: "getTemplates",
+				value: function getTemplates() {
+
+					var templates = {};
+
+					for (var i in this.templates) {
+						if (i.indexOf(Config.general.systemPrefix)) templates[i] = this.templates[i];
+					}return templates;
 				}
 			}, {
 				key: "getSubTemplate",
@@ -592,8 +585,11 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 			}, {
 				key: "debug",
 				value: function debug(query) {
-
 					var response = new Classes.processResponse(query.rule, "no data found", false);
+
+					response.value = "Currently not implemented!";
+
+					return response;
 				}
 			}]);
 
