@@ -212,7 +212,7 @@ exports.parser = new class HTMLParserClass {
 		let base = {};
 
 		// Todo: implement relation to parent templates when a subprocess
-		base.hp_templateId = tProcess.template.id || (tProcess.isSubProcess) ? "Subtemplate": "Undefined template id";
+		base[Config.general.systemPrefix + "templateId"] = tProcess.template.id || (tProcess.isSubProcess) ? "Subtemplate": "Undefined template id";
 
 		return base;
 	}
@@ -323,13 +323,13 @@ exports.parser = new class HTMLParserClass {
 			return {};
 
 		let markup = {
-			"hp_rule": rule.rule,
-			"hp_request": rule.request,
-			"hp_key": rule.key || ""
+			[`${Config.general.systemPrefix}hp_rule`]: rule.rule,
+			[`${Config.general.systemPrefix}hp_request`]: rule.request,
+			[`${Config.general.systemPrefix}hp_key`]: rule.key || ""
 		};
 		
 		for ( let i in rule.options ) {
-			markup[`hp_option_${i}`] = rule.options[i];
+			markup[`${Config.general.systemPrefix}hp_option_${i}`] = rule.options[i];
 		}
 
 		return markup;
@@ -395,29 +395,6 @@ exports.parser = new class HTMLParserClass {
 		}
 		
 		return match[1] || match[0] || "";
-	}
-
-	//_________________________________________________________________________________________
-	// builds the markup for the current query
-	//
-	// param1 (RuleClass) expects the current rule instance
-	//
-	// return Object
-	//
-	_buildQueryMarkup( rule ) {
-
-		let markup = {};
-		markup.hp_rule = rule.rule;
-		markup.hp_request = rule.request;
-		markup.hp_key = rule.key;
-
-		let baseOptions = Config.parsing.defaultOptionSet;
-
-		for ( let i in baseOptions ) {
-			markup[`hp_option_${i}`] = baseOptions[i];
-		}
-
-		return markup;
 	}
 
 	//_________________________________________________________________________________________
@@ -536,10 +513,27 @@ exports.parser = new class HTMLParserClass {
 	//
 	getTemplate( templateId ) {
 
-		if (!this.templates[templateId])
+		// core templates are left out
+		if ( !this.templates[templateId] || !templateId.indexOf(Config.general.systemPrefix) )
 			return null;
 
 		return this.templates[templateId];
+	}
+
+	//_________________________________________________________________________________________
+	// returns every registered templates except the core ones
+	//
+	// return object - key:id value:template instance
+	//
+	getTemplates() {
+
+		let templates = {};
+
+		for( let i in this.templates )
+			if ( i.indexOf(Config.general.systemPrefix) )
+				templates[i] = this.templates[i];
+		
+		return templates;
 	}
 
 	//_________________________________________________________________________________________
