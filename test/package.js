@@ -169,7 +169,9 @@ exports.templates = (new TemplatesClass()).templates;
 
 // includes
 // general configuration
-exports.config = {};
+exports.general = {};
+
+exports.general.systemPrefix = "hp_";
 
 //_____________________________________________________________________________________________
 // regex for extracting and filtering
@@ -450,7 +452,7 @@ exports.parser = new class HTMLParserClass {
 		let base = {};
 
 		// Todo: implement relation to parent templates when a subprocess
-		base.hp_templateId = tProcess.template.id || (tProcess.isSubProcess) ? "Subtemplate": "Undefined template id";
+		base[Config.general.systemPrefix + "templateId"] = tProcess.template.id || (tProcess.isSubProcess) ? "Subtemplate": "Undefined template id";
 
 		return base;
 	}
@@ -561,13 +563,13 @@ exports.parser = new class HTMLParserClass {
 			return {};
 
 		let markup = {
-			"hp_rule": rule.rule,
-			"hp_request": rule.request,
-			"hp_key": rule.key || ""
+			[`${Config.general.systemPrefix}hp_rule`]: rule.rule,
+			[`${Config.general.systemPrefix}hp_request`]: rule.request,
+			[`${Config.general.systemPrefix}hp_key`]: rule.key || ""
 		};
 		
 		for ( let i in rule.options ) {
-			markup[`hp_option_${i}`] = rule.options[i];
+			markup[`${Config.general.systemPrefix}hp_option_${i}`] = rule.options[i];
 		}
 
 		return markup;
@@ -636,29 +638,6 @@ exports.parser = new class HTMLParserClass {
 	}
 
 	//_________________________________________________________________________________________
-	// builds the markup for the current query
-	//
-	// param1 (RuleClass) expects the current rule instance
-	//
-	// return Object
-	//
-	_buildQueryMarkup( rule, userMarkup ) {
-
-		let markup = {};
-		markup.hp_rule = rule.rule;
-		markup.hp_request = rule.request;
-		markup.hp_key = rule.key;
-
-		let baseOptions = Config.parsing.defaultOptionSet;
-
-		for ( let i in baseOptions ) {
-			markup[`hp_option_${i}`] = baseOptions[i];
-		}
-
-		return markup;
-	}
-
-	//_________________________________________________________________________________________
 	// checks the given response and corrects it if necessary
 	//
 	// param1 (ProcessResponse) expects the response instance
@@ -675,7 +654,7 @@ exports.parser = new class HTMLParserClass {
 			response.replacement = rule.rule;
 		
 		if ( !response.value || response.value.constructor !== String && response.value.constructor !== Function )
-			response.value = "";
+			response.value = String(response.value);
 
 		return response;
 	}
@@ -774,10 +753,27 @@ exports.parser = new class HTMLParserClass {
 	//
 	getTemplate( templateId ) {
 
-		if (!this.templates[templateId])
+		// core templates are left out
+		if ( !this.templates[templateId] || !templateId.indexOf(Config.general.systemPrefix) )
 			return null;
 
 		return this.templates[templateId];
+	}
+
+	//_________________________________________________________________________________________
+	// returns every registered templates except the core ones
+	//
+	// return object - key:id value:template instance
+	//
+	getTemplates() {
+
+		let templates = {};
+
+		for( let i in this.templates )
+			if ( i.indexOf(Config.general.systemPrefix) )
+				templates[i] = this.templates[i];
+		
+		return templates;
 	}
 
 	//_________________________________________________________________________________________
@@ -963,11 +959,12 @@ exports.requestProcessor = new class RequestProcessor {
 	//
 	debug( query ) {
 
+		// Todo: finish "debug" command implementation!
 		let response = new Classes.processResponse( query.rule, "no data found", false );
 
+		response.value = "Currently not implemented!";
 
-
-		// return 
+		return response;
 	}
 
 	//_________________________________________________________________________________________
@@ -1046,15 +1043,8 @@ var markups = {
 				{ "language": "CSS/HTML" },
 			]
 		}
-	},
-
-	"vocabulary-add": {
-		"form-section-title": "Vokabular",
-		"form-items": [
-			{ "form-attribute-for": "form-vocabulary-add", "form-label": "Vokabel" },
-			{ "form-attribute-for": "form-language-add", "form-label": "Sprache" },
-		]
 	}
+	
 };
 
 //_____________________________________________________________________________________________
@@ -1071,12 +1061,11 @@ document.addEventListener("DOMContentLoaded", function() {
 		"test-template-placeholder",
 		"test-foreach",
 		"test-invalid-rules",
-		"test-round-and-round",
-		"vocabulary-add"
+		"test-round-and-round"
 	];
 
 	// define test template
-	let testNumbers = [8];
+	let testNumbers = [1,2,3,4,5,6,7];
 
 	// test function
 	var test = function( testNrs ) {
