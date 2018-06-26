@@ -13,7 +13,9 @@
 
 // includes
 // general configuration
-exports.config = {};
+exports.general = {};
+
+exports.general.systemPrefix = "hp_";
 
 //_____________________________________________________________________________________________
 // regex for extracting and filtering
